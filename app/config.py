@@ -1,8 +1,11 @@
 """Environment-based configuration.
 
-Values are read from the process environment (and a local .env file in
-development). Each environment has its own class; ProductionConfig refuses to
-start when mandatory settings are missing.
+Values are read from the process environment (and a local .env file).
+Each environment has its own class; ProductionConfig refuses to start when
+mandatory settings are missing.
+
+Database: SQLite by default (instance/ahenfor.db), which suits a single
+Hostinger VPS. Set DATABASE_URL to use PostgreSQL instead.
 """
 import logging
 import os
@@ -54,20 +57,23 @@ def normalise_db_url(url):
     return url
 
 
+DEFAULT_SQLITE_PATH = BASE_DIR / "instance" / "ahenfor.db"
+DEFAULT_SQLITE_URI = "sqlite:///" + DEFAULT_SQLITE_PATH.as_posix()
+
+
 class Config:
     SITE_NAME = "Ahenfor Engineering and Construction Limited"
     SITE_SHORT_NAME = "Ahenfor"
     SITE_URL = (env("SITE_URL", "http://localhost:5000") or "").rstrip("/")
 
     SECRET_KEY = env("SECRET_KEY")
-    SQLALCHEMY_DATABASE_URI = normalise_db_url(env("DATABASE_URL"))
+    SQLALCHEMY_DATABASE_URI = normalise_db_url(env("DATABASE_URL")) or DEFAULT_SQLITE_URI
     SQLALCHEMY_ENGINE_OPTIONS = {"pool_pre_ping": True}
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Media
     MEDIA_STORAGE_PROVIDER = (env("MEDIA_STORAGE_PROVIDER", "local") or "local").lower()
     LOCAL_MEDIA_ROOT = env("LOCAL_MEDIA_ROOT", str(BASE_DIR / "instance" / "uploads"))
-    ALLOW_LOCAL_MEDIA_IN_PRODUCTION = env_bool("ALLOW_LOCAL_MEDIA_IN_PRODUCTION")
     MAX_IMAGE_BYTES = env_int("MAX_IMAGE_MB", 10) * MB
     MAX_VIDEO_BYTES = env_int("MAX_VIDEO_MB", 100) * MB
     MAX_DOCUMENT_BYTES = env_int("MAX_DOCUMENT_MB", 15) * MB
@@ -123,9 +129,6 @@ class Config:
 class DevelopmentConfig(Config):
     DEBUG = env_bool("FLASK_DEBUG", True)
     SECRET_KEY = Config.SECRET_KEY or "dev-only-insecure-secret-key"
-    SQLALCHEMY_DATABASE_URI = Config.SQLALCHEMY_DATABASE_URI or (
-        "sqlite:///" + str(BASE_DIR / "instance" / "dev.db")
-    )
 
 
 class TestingConfig(Config):
@@ -151,19 +154,10 @@ class ProductionConfig(Config):
         cfg = app.config
         problems = []
         key = cfg.get("SECRET_KEY") or ""
-        if len(key) < 32 or key == "replace-with-a-secure-secret":
-            problems.append("SECRET_KEY must be set to a random value of at least 32 characters.")
-        db_url = cfg.get("SQLALCHEMY_DATABASE_URI") or ""
-        if not db_url:
-            problems.append("DATABASE_URL must be set (PostgreSQL).")
-        elif db_url.startswith("sqlite"):
-            problems.append("DATABASE_URL points at SQLite; production requires PostgreSQL.")
+        if len(key) < 32 or key == "replace-with-a-secure-secret" or key.startswith("dev-"):
+            problems.append("SECRET_KEY must be a random value of at least 32 characters "
+                            '(python -c "import secrets; print(secrets.token_hex(32))").')
         provider = cfg.get("MEDIA_STORAGE_PROVIDER")
-        if provider == "local" and not cfg.get("ALLOW_LOCAL_MEDIA_IN_PRODUCTION"):
-            problems.append(
-                "MEDIA_STORAGE_PROVIDER=local in production. Configure s3/cloudinary, or set "
-                "ALLOW_LOCAL_MEDIA_IN_PRODUCTION=true if the upload folder is on a backed-up disk."
-            )
         if provider == "s3" and not cfg.get("AWS_S3_BUCKET"):
             problems.append("AWS_S3_BUCKET is required when MEDIA_STORAGE_PROVIDER=s3.")
         if provider == "cloudinary" and not all(
@@ -175,7 +169,12 @@ class ProductionConfig(Config):
         if problems:
             raise ConfigurationError(
                 "Production configuration is incomplete:\n  - " + "\n  - ".join(problems)
+                + "\n(For local development set FLASK_CONFIG=development in .env)"
             )
+        if (cfg.get("SQLALCHEMY_DATABASE_URI") or "").startswith("sqlite"):
+            log.info("Using SQLite. Back up instance/ahenfor.db regularly (deploy/backup.sh).")
+        if provider == "local":
+            log.info("Using local media storage at %s. Include it in backups.", cfg.get("LOCAL_MEDIA_ROOT"))
         if cfg.get("RATELIMIT_STORAGE_URI", "").startswith("memory://"):
             log.warning(
                 "RATELIMIT_STORAGE_URI is memory:// - login limits are per worker process. "

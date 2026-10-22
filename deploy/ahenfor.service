@@ -10,8 +10,11 @@ User=ahenfor
 Group=www-data
 WorkingDirectory=/srv/ahenfor/app
 EnvironmentFile=/srv/ahenfor/app/.env
+# One worker process with threads: SQLite has a single writer, and the in-memory
+# login rate limiter is shared by every request.
 ExecStart=/srv/ahenfor/app/.venv/bin/gunicorn "run:app" \
-    --workers 3 \
+    --workers 1 \
+    --threads 8 \
     --bind 127.0.0.1:8000 \
     --timeout 300 \
     --access-logfile - \

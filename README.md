@@ -52,7 +52,7 @@ HTML.
 | Layer | Choice |
 |---|---|
 | Web framework | Flask 3 (application factory, Blueprints), Jinja2, vanilla JavaScript |
-| Database | PostgreSQL (production), SQLite (development), Flask-SQLAlchemy 3, Flask-Migrate/Alembic |
+| Database | SQLite (`instance/ahenfor.db`, WAL mode) in development and production; PostgreSQL optional via `DATABASE_URL`. Flask-SQLAlchemy 3, Flask-Migrate/Alembic |
 | Auth & forms | Flask-Login, Flask-WTF (CSRF), Werkzeug scrypt hashing, Flask-Limiter |
 | Media | Storage interface with local, S3/S3-compatible (boto3) and Cloudinary backends; Pillow for validation and resizing |
 | Email | Built-in SMTP backend behind an abstraction (console backend in development) |
@@ -139,7 +139,7 @@ Key rules:
 ## 5. Prerequisites
 
 - Python 3.11+ (developed and tested on 3.13)
-- PostgreSQL 14+ for production (tested on 16). SQLite is fine for local development.
+- Nothing extra for the database: SQLite ships with Python. (PostgreSQL 14+ is supported if the site ever outgrows SQLite.)
 - Optional: an S3-compatible bucket or a Cloudinary account, an SMTP mailbox, and Redis
   (shared rate limits across Gunicorn workers)
 
@@ -159,7 +159,7 @@ pip install -r requirements-dev.txt
 
 # Environment
 cp .env.example .env
-# Edit .env: keep FLASK_CONFIG=development and leave DATABASE_URL blank to use SQLite.
+# Edit .env: keep FLASK_CONFIG=development and leave DATABASE_URL blank (SQLite).
 ```
 
 ## 10. Environment configuration
@@ -170,7 +170,7 @@ Every setting is listed with comments in `.env.example`. The important ones are:
 |---|---|
 | `FLASK_CONFIG` | `development` or `production`. **Defaults to production**, which refuses to start with unsafe settings. |
 | `SECRET_KEY` | 32+ random characters: `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `DATABASE_URL` | `postgresql://user:pass@host:5432/db` (the `postgres://` form from Render also works) |
+| `DATABASE_URL` | Leave **blank** for SQLite at `instance/ahenfor.db`. Optional: a `postgresql://...` URL |
 | `SITE_URL` | Public base URL, used for canonical links, the sitemap and email links |
 | `ALLOWED_HOSTS` | Comma-separated host names (Flask `TRUSTED_HOSTS`) |
 | `PROXY_FIX_HOPS` | `1` behind Nginx or Render, so HTTPS and client IPs are detected correctly |
@@ -184,13 +184,10 @@ never printed.
 ## 11–12. Database setup and migrations
 
 ```bash
-# Development (SQLite at instance/dev.db)
+# SQLite (default: instance/ahenfor.db when DATABASE_URL is blank)
 flask --app run.py db upgrade
 
-# PostgreSQL
-sudo -u postgres psql -c "CREATE USER ahenfor WITH PASSWORD 'change-me';"
-sudo -u postgres psql -c "CREATE DATABASE ahenfor_db OWNER ahenfor;"
-# set DATABASE_URL=postgresql://ahenfor:change-me@localhost:5432/ahenfor_db in .env
+# Optional PostgreSQL instead: create a database and set DATABASE_URL=postgresql://... in .env, then
 flask --app run.py db upgrade
 ```
 
@@ -257,7 +254,7 @@ and 15 MB per document (see `.env`).
 **Local (`MEDIA_STORAGE_PROVIDER=local`)** writes to `LOCAL_MEDIA_ROOT` (default
 `instance/uploads`). Local storage is **not durable** on platforms with ephemeral
 disks such as Render or Heroku. On a VPS it is acceptable only with backups: set
-`ALLOW_LOCAL_MEDIA_IN_PRODUCTION=true` and let Nginx serve `/media/public/`
+make sure the upload folder is in your backups, and let Nginx serve `/media/public/`
 (see `deploy/nginx.conf`). Never expose the `private/` folder.
 
 **S3 or S3-compatible (`s3`)**:
@@ -301,13 +298,13 @@ The admin inquiry page shows whether a notification was actually delivered, and
 
 ```bash
 # 1. System packages
-sudo apt install python3-venv postgresql nginx certbot python3-certbot-nginx
+sudo apt install python3-venv nginx certbot python3-certbot-nginx
 sudo adduser --system --group --home /srv/ahenfor ahenfor
 
 # 2. Code and environment
 sudo -u ahenfor git clone <repo-url> /srv/ahenfor/app && cd /srv/ahenfor/app
 sudo -u ahenfor python3 -m venv .venv && sudo -u ahenfor .venv/bin/pip install -r requirements.txt
-sudo -u ahenfor cp .env.example .env     # FLASK_CONFIG=production, SECRET_KEY, DATABASE_URL,
+sudo -u ahenfor cp .env.example .env     # FLASK_CONFIG=production, SECRET_KEY, DATABASE_URL blank (SQLite),
                                          # SITE_URL=https://ahenfor.com, ALLOWED_HOSTS, PROXY_FIX_HOPS=1, ...
 sudo chmod 600 .env
 
@@ -325,9 +322,10 @@ sudo ln -s /etc/nginx/sites-available/ahenfor /etc/nginx/sites-enabled/ && sudo 
 sudo certbot --nginx -d ahenfor.com -d www.ahenfor.com
 ```
 
-Never run `flask run` in production. With several Gunicorn workers, set
-`RATELIMIT_STORAGE_URI=redis://localhost:6379/0` (and `pip install redis`) so that
-login limits are shared between workers.
+Never run `flask run` in production. The service runs **one Gunicorn worker with 8
+threads**, which suits SQLite (one writer) and keeps login rate limits in a single
+process. If you later add workers, set `RATELIMIT_STORAGE_URI=redis://localhost:6379/0`
+(and `pip install redis`).
 
 **Render**: use the start command `gunicorn "run:app" --workers 2 --timeout 300` and the
 build command `pip install -r requirements.txt && flask --app run.py db upgrade`. Attach
@@ -346,13 +344,17 @@ sudo systemctl restart ahenfor
 
 ## 19. Backup and recovery
 
-`deploy/backup.sh` runs `pg_dump` (custom format) and, for local storage, archives the
+`deploy/backup.sh` takes a consistent online copy of the SQLite database (or `pg_dump` for PostgreSQL) and, for local storage, archives the
 upload folder. It keeps 14 days of backups. Schedule it with cron, and **copy the
 backups off the server**.
 
 ```bash
 # Restore the database
-pg_restore --clean --no-owner --dbname="$DATABASE_URL" /srv/ahenfor/backups/db-YYYYMMDD-HHMMSS.dump
+sudo systemctl stop ahenfor
+cp /srv/ahenfor/backups/db-YYYYMMDD-HHMMSS.sqlite3 /srv/ahenfor/app/instance/ahenfor.db
+rm -f /srv/ahenfor/app/instance/ahenfor.db-wal /srv/ahenfor/app/instance/ahenfor.db-shm
+sudo systemctl start ahenfor
+# (PostgreSQL installs: pg_restore --clean --no-owner --dbname="$DATABASE_URL" db-....dump)
 # Restore local media
 tar -xzf /srv/ahenfor/backups/media-YYYYMMDD-HHMMSS.tar.gz -C /srv/ahenfor/
 ```

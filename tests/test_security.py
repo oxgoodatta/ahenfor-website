@@ -149,9 +149,8 @@ def test_robots_blocks_admin(client):
 def test_production_config_refuses_unsafe_settings():
     class Unsafe(ProductionConfig):
         SECRET_KEY = "short"
-        SQLALCHEMY_DATABASE_URI = "sqlite:///x.db"
-        MEDIA_STORAGE_PROVIDER = "local"
-        ALLOW_LOCAL_MEDIA_IN_PRODUCTION = False
+        MEDIA_STORAGE_PROVIDER = "s3"
+        AWS_S3_BUCKET = None
 
     from flask import Flask
 
@@ -161,7 +160,7 @@ def test_production_config_refuses_unsafe_settings():
         Unsafe.validate(probe)
     except ConfigurationError as exc:
         message = str(exc)
-        assert "SECRET_KEY" in message and "PostgreSQL" in message and "MEDIA_STORAGE_PROVIDER" in message
+        assert "SECRET_KEY" in message and "AWS_S3_BUCKET" in message
     else:
         raise AssertionError("unsafe production configuration accepted")
 
@@ -170,12 +169,12 @@ def test_production_config_accepts_complete_settings():
     from flask import Flask
 
     class Complete(ProductionConfig):
+        """The Hostinger VPS setup: SQLite + local media on the server's disk."""
         SECRET_KEY = "x" * 48
-        SQLALCHEMY_DATABASE_URI = "postgresql+psycopg://u:p@db/ahenfor"
-        MEDIA_STORAGE_PROVIDER = "s3"
-        AWS_S3_BUCKET = "ahenfor-media"
+        SQLALCHEMY_DATABASE_URI = "sqlite:////srv/ahenfor/app/instance/ahenfor.db"
+        MEDIA_STORAGE_PROVIDER = "local"
         MAIL_BACKEND = "smtp"
-        MAIL_SERVER = "smtp.example.com"
+        MAIL_SERVER = "smtp.hostinger.com"
 
     probe = Flask("probe")
     probe.config.from_object(Complete)

@@ -15,10 +15,18 @@ from app.extensions import csrf, db, limiter, login_manager, migrate
 
 @event.listens_for(Engine, "connect")
 def _sqlite_foreign_keys(dbapi_connection, connection_record):  # pragma: no cover - driver specific
-    """Enforce foreign keys on SQLite so development matches PostgreSQL behaviour."""
+    """SQLite settings for a small production site.
+
+    foreign_keys: enforce relationships (media can't be deleted while in use).
+    WAL + busy_timeout: readers never block the writer, and several Gunicorn
+    workers wait briefly instead of failing with "database is locked".
+    """
     if dbapi_connection.__class__.__module__.startswith("sqlite3"):
         cursor = dbapi_connection.cursor()
         cursor.execute("PRAGMA foreign_keys=ON")
+        cursor.execute("PRAGMA busy_timeout=5000")
+        cursor.execute("PRAGMA journal_mode=WAL")
+        cursor.execute("PRAGMA synchronous=NORMAL")
         cursor.close()
 
 

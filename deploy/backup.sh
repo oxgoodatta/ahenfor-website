@@ -11,9 +11,19 @@ STAMP="$(date +%Y%m%d-%H%M%S)"
 set -a; source "$APP_DIR/.env"; set +a
 mkdir -p "$BACKUP_DIR"
 
-# 1. PostgreSQL (custom format: restore with pg_restore)
-pg_dump --format=custom --no-owner --dbname="${DATABASE_URL/postgresql+psycopg:/postgresql:}" \
-  --file="$BACKUP_DIR/db-$STAMP.dump"
+# 1. Database
+DB_URL="${DATABASE_URL:-}"
+if [ -z "$DB_URL" ] || [[ "$DB_URL" == sqlite* ]]; then
+  # SQLite: consistent online copy via Python's backup API (safe while the site is running)
+  DB_FILE="${DB_URL#sqlite:///}"
+  DB_FILE="${DB_FILE:-$APP_DIR/instance/ahenfor.db}"
+  "$APP_DIR/.venv/bin/python" -c "import sqlite3,sys; s=sqlite3.connect(sys.argv[1]); d=sqlite3.connect(sys.argv[2]); s.backup(d); d.close(); s.close()" \
+    "$DB_FILE" "$BACKUP_DIR/db-$STAMP.sqlite3"
+else
+  # PostgreSQL (custom format: restore with pg_restore)
+  pg_dump --format=custom --no-owner --dbname="${DB_URL/postgresql+psycopg:/postgresql:}" \
+    --file="$BACKUP_DIR/db-$STAMP.dump"
+fi
 
 # 2. Local media (skip when using S3/Cloudinary - enable versioning/backups there instead)
 if [ "${MEDIA_STORAGE_PROVIDER:-local}" = "local" ]; then
