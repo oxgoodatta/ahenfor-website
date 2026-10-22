@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, status_buttons, thumb, visibility_filter %}
+{% block title %}Testimonials{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Testimonials</h1><p class="sub">Client statements. Only testimonials with recorded client approval can be published.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('admin.testimonial_new') }}">+ Add testimonial</a></div>
+</div>
+<section class="card">
+  <form class="toolbar" method="get"><input type="search" name="q" value="{{ q }}" placeholder="Search" aria-label="Search testimonials">{{ visibility_filter(visibilities, visibility) }}<button class="btn btn-secondary" type="submit">Search</button></form>
+  {% if items %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th></th><th>Client</th><th>Approved</th><th>Visibility</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>{% for t in items %}
+      <tr><td>{{ thumb(t.portrait) }}</td>
+        <td class="title-cell"><a href="{{ url_for('admin.testimonial_edit', item_id=t.id) }}">{{ t.client_name }}</a><div class="muted small">{{ [t.client_role, t.organization]|select|join(', ') }} · “{{ t.quote|truncate(70) }}”</div></td>
+        <td>{% if t.client_approved %}<span class="badge badge-published">Yes</span>{% else %}<span class="badge badge-draft">Not yet</span>{% endif %}</td>
+        <td>{{ pub_badge(t.publication_status) }}</td>
+        <td><div class="row-actions"><a class="btn btn-secondary btn-sm" href="{{ url_for('admin.testimonial_edit', item_id=t.id) }}">Edit</a>{{ status_buttons('testimonial', t) }}</div></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{{ icon('chat') }}<h3>No testimonials yet</h3><p>Add a statement once the client has approved its wording.</p></div>{% endif %}
+</section>
+{% endblock %}

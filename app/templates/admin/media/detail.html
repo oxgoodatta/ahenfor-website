@@ -1,0 +1,37 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field %}
+{% block title %}{{ asset.display_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="crumbs"><a href="{{ url_for('admin.media_library') }}">Media library</a> › {{ asset.display_name }}</div><h1>{{ asset.display_name }}</h1>
+  <p class="sub">{{ asset.kind.label }} · {{ asset.size_label }}{% if asset.width %} · {{ asset.width }}×{{ asset.height }} px{% endif %} · uploaded {{ asset.created_at|short_date }}{% if asset.uploaded_by %} by {{ asset.uploaded_by.name }}{% endif %}{% if asset.is_archived %} · <span class="badge badge-archived">Archived</span>{% endif %}</p></div>
+  <div class="actions"><a class="btn btn-secondary" href="{{ asset.url }}" target="_blank" rel="noopener">Open original</a></div>
+</div>
+<div class="grid-2">
+  <section class="card"><div class="card-body">
+    {% if asset.is_image %}<img src="{{ asset.url }}" alt="{{ asset.alt_text }}" style="border-radius:6px;width:100%">
+    {% elif asset.is_video %}<video src="{{ asset.url }}" controls preload="metadata" style="width:100%;border-radius:6px;background:#000"></video>
+    {% else %}<p><a href="{{ asset.url }}" target="_blank" rel="noopener">Open document</a></p>{% endif %}
+  </div></section>
+  <div>
+    <form class="card" method="post" novalidate>
+      {{ form.csrf_token }}
+      <div class="card-head"><h2>Description</h2></div>
+      <div class="card-body fields">{{ field(form.alt_text) }}{{ field(form.caption) }}</div>
+      <div class="form-foot"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+    <section class="card">
+      <div class="card-head"><h2>Where this file is used</h2></div>
+      <div class="card-body">
+        {% if references %}<ul class="ref-list">{% for r in references %}<li>{{ r }}</li>{% endfor %}</ul>
+        <p class="muted small" style="margin-top:.75rem">A file that is in use cannot be deleted. Remove it from these places first, or archive it to hide it from the library.</p>
+        {% else %}<p class="muted">Not used anywhere.</p>{% endif %}
+      </div>
+      <div class="form-foot">
+        <form class="inline" method="post" action="{{ url_for('admin.media_archive', asset_id=asset.id) }}">{{ action_form.hidden_tag() }}{% if asset.is_archived %}<input type="hidden" name="restore" value="1"><button class="btn btn-secondary" type="submit">Restore to library</button>{% else %}<button class="btn btn-secondary" type="submit">Archive</button>{% endif %}</form>
+        <form class="inline" method="post" action="{{ url_for('admin.media_delete', asset_id=asset.id) }}" data-confirm="Permanently delete this file? This cannot be undone.">{{ action_form.hidden_tag() }}<button class="btn btn-danger" type="submit" {% if references %}disabled title="In use — cannot be deleted"{% endif %}>Delete permanently</button></form>
+      </div>
+    </section>
+  </div>
+</div>
+{% endblock %}

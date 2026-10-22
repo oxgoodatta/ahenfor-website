@@ -1,0 +1,50 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, status_buttons, pager, thumb %}
+{% block title %}News & events{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>News &amp; events</h1><p class="sub">Company news, announcements, milestones and events. Past events are kept and shown under “Past events”.</p></div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{{ url_for('admin.post_new', kind='event') }}">+ Add event</a>
+    <a class="btn btn-primary" href="{{ url_for('admin.post_new') }}">+ Add news item</a>
+  </div>
+</div>
+<section class="card">
+  <form class="toolbar" method="get" role="search">
+    <label class="visually-hidden" for="q">Search</label>
+    <input type="search" id="q" name="q" value="{{ q }}" placeholder="Search title, summary or venue">
+    <label class="visually-hidden" for="kind">Type</label>
+    <select id="kind" name="kind" data-autosubmit><option value="">All types</option>{% for k in kinds %}<option value="{{ k.value }}"{% if k.value == kind %} selected{% endif %}>{{ k.label }}</option>{% endfor %}</select>
+    <label class="visually-hidden" for="when">Timing</label>
+    <select id="when" name="when" data-autosubmit><option value="">Any date</option><option value="upcoming"{% if when == 'upcoming' %} selected{% endif %}>Upcoming events</option><option value="past"{% if when == 'past' %} selected{% endif %}>Past events</option></select>
+    <label class="visually-hidden" for="visibility">Visibility</label>
+    <select id="visibility" name="visibility" data-autosubmit><option value="">Published &amp; drafts</option>{% for v in visibilities %}<option value="{{ v.value }}"{% if v.value == visibility %} selected{% endif %}>{{ v.label }} only</option>{% endfor %}</select>
+    <button class="btn btn-secondary" type="submit">Search</button>
+  </form>
+  {% if posts %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th></th><th>Title</th><th>Type</th><th>Date</th><th>Visibility</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>
+    {% for p in posts %}
+    <tr>
+      <td>{{ thumb(p.cover_image) }}</td>
+      <td class="title-cell"><a href="{{ url_for('admin.post_edit', post_id=p.id) }}">{{ p.title }}</a>{% if p.is_sample %} <span class="badge">Sample</span>{% endif %}</td>
+      <td>{{ p.kind.label }}</td>
+      <td class="small nowrap">{% if p.is_event %}{{ p.starts_at|short_date }} {% if p.is_past %}<span class="badge badge-archived">Past</span>{% else %}<span class="badge badge-upcoming">Upcoming</span>{% endif %}{% else %}<span class="muted">{{ (p.published_at or p.created_at)|short_date }}</span>{% endif %}</td>
+      <td>{{ pub_badge(p.publication_status) }}{% if p.is_published and p.published_at and p.published_at > now_utc() %} <span class="badge">Scheduled</span>{% endif %}</td>
+      <td><div class="row-actions">
+        <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.post_edit', post_id=p.id) }}">Edit</a>
+        <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.post_preview', post_id=p.id) }}" target="_blank" rel="noopener">Preview</a>
+        {{ status_buttons('post', p) }}
+      </div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {{ pager(pagination, 'admin.posts') }}
+  {% else %}
+  <div class="empty">{{ icon('calendar') }}<h3>Nothing here yet</h3><p>Add a news item or an event. It stays a draft until you publish it.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

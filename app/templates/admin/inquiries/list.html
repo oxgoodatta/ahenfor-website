@@ -1,0 +1,28 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pager %}
+{% block title %}Inquiries{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Inquiries</h1><p class="sub">Messages and quote requests from the website. Private — never shown publicly.</p></div></div>
+<section class="card">
+  <form class="toolbar" method="get" role="search">
+    <input type="search" name="q" value="{{ q }}" placeholder="Search name, email, organisation or location" aria-label="Search inquiries">
+    <select name="kind" data-autosubmit aria-label="Type"><option value="">All types</option>{% for k in kinds %}<option value="{{ k.value }}"{% if k.value == kind %} selected{% endif %}>{{ 'Quote requests' if k.value == 'quote' else 'Contact messages' }}</option>{% endfor %}</select>
+    <select name="status" data-autosubmit aria-label="Status"><option value="">All statuses</option>{% for s in statuses %}<option value="{{ s.value }}"{% if s.value == status %} selected{% endif %}>{{ s.label }}</option>{% endfor %}</select>
+    <button class="btn btn-secondary" type="submit">Search</button>
+  </form>
+  {% if inquiries %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>From</th><th>Type</th><th>About</th><th>Received</th><th>Status</th></tr></thead>
+    <tbody>{% for i in inquiries %}
+      <tr><td class="title-cell"><a href="{{ url_for('admin.inquiry_detail', inquiry_id=i.id) }}">{{ i.full_name }}</a><div class="muted small">{{ i.email }}</div></td>
+        <td>{{ 'Quote' if i.kind.value == 'quote' else 'Contact' }}{% if i.attachment %} {{ icon('file') }}{% endif %}</td>
+        <td class="small">{{ (i.service or i.subject or '')|truncate(50) }}{% if i.project_location %}<div class="muted">{{ i.project_location }}</div>{% endif %}</td>
+        <td class="small nowrap">{{ i.created_at|short_date }}</td>
+        <td><span class="badge badge-{{ i.status.value }}">{{ i.status.label }}</span></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {{ pager(pagination, 'admin.inquiries') }}
+  {% else %}<div class="empty">{{ icon('mail') }}<h3>No inquiries</h3><p>Messages from the Contact and Request a Quote forms will appear here.</p></div>{% endif %}
+</section>
+{% endblock %}

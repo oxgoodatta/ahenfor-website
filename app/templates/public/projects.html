@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, project_card, pagination_nav %}
+{% block title %}{% if status %}{{ status|replace('_', ' ')|title }} {% endif %}Projects — {{ site_name }}{% endblock %}
+{% block meta_description %}Ongoing, upcoming and completed building and infrastructure projects by {{ site_name }}.{% endblock %}
+{% block content %}
+{% with title='Projects', lede='Ongoing, upcoming and completed work, with construction progress recorded phase by phase.', kicker='Portfolio' %}{% include "partials/page_header.html" %}{% endwith %}
+
+<section class="section">
+  <div class="container">
+    <nav class="filter-bar" aria-label="Filter projects by status">
+      <a href="{{ url_for('public.projects', category=category) }}"{% if not status %} aria-current="true"{% endif %}>All</a>
+      {% for s in statuses %}
+      <a href="{{ url_for('public.projects', status=s.value, category=category) }}"{% if status == s.value %} aria-current="true"{% endif %}>{{ s.label }}</a>
+      {% endfor %}
+      <span class="spacer"></span>
+      <form method="get" action="{{ url_for('public.projects') }}" data-autosubmit>
+        {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+        <label class="visually-hidden" for="category">Category</label>
+        <select id="category" name="category">
+          <option value="">All categories</option>
+          {% for c in categories %}<option value="{{ c }}"{% if c == category %} selected{% endif %}>{{ c }}</option>{% endfor %}
+        </select>
+        <noscript><button class="btn btn-sm" type="submit">Filter</button></noscript>
+      </form>
+    </nav>
+
+    {% if projects %}
+      <div class="card-grid">{% for p in projects %}{{ project_card(p, heading='h2') }}{% endfor %}</div>
+      {{ pagination_nav(pagination, 'public.projects') }}
+    {% else %}
+      <div class="empty-state"><h2 style="font-size:1.4rem">No projects to show yet</h2><p>{% if status or category %}Try another filter, or <a href="{{ url_for('public.projects') }}">view all projects</a>.{% else %}Project information will be published here soon.{% endif %}</p></div>
+    {% endif %}
+  </div>
+</section>
+{% include "partials/cta.html" %}
+{% endblock %}

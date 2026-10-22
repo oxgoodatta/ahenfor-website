@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <!-- Fallback hero used until a photograph or video is published from Admin > Media & Hero. -->
+  <defs>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0v40" fill="none" stroke="#1a3159" stroke-width="1"/></pattern>
+    <pattern id="G" width="200" height="200" patternUnits="userSpaceOnUse"><path d="M200 0H0v200" fill="none" stroke="#22406e" stroke-width="1.2"/></pattern>
+  </defs>
+  <rect width="1600" height="1000" fill="#0b1a33"/>
+  <rect width="1600" height="1000" fill="url(#g)"/>
+  <rect width="1600" height="1000" fill="url(#G)"/>
+  <g fill="none" stroke="#c29a4b" stroke-opacity=".55" stroke-width="2">
+    <path d="M760 820h760"/>
+    <path d="M880 820V420h170v400M1050 820V300h210v520M1260 820V520h150v300"/>
+    <path d="M900 470h130M900 540h130M900 610h130M900 680h130M900 750h130"/>
+    <path d="M1070 360h170M1070 440h170M1070 520h170M1070 600h170M1070 680h170M1070 760h170"/>
+    <path d="M1280 580h110M1280 650h110M1280 720h110"/>
+  </g>
+  <g fill="none" stroke="#d9b978" stroke-opacity=".7" stroke-width="3">
+    <path d="M1460 820V170M1140 190h420M1460 170l-60 20M1460 170l60 20M1180 190v120"/>
+    <path d="M1440 820l20-30 20 30"/>
+  </g>
+  <g fill="none" stroke="#2b4673" stroke-width="1.5" stroke-dasharray="6 8">
+    <path d="M760 860h760M880 880h380"/>
+  </g>
+</svg>

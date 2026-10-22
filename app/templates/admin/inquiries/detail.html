@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import field %}
+{% block title %}Inquiry from {{ inquiry.full_name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="crumbs"><a href="{{ url_for('admin.inquiries') }}">Inquiries</a> › {{ inquiry.full_name }}</div>
+  <h1>{{ 'Quote request' if inquiry.kind.value == 'quote' else 'Message' }} from {{ inquiry.full_name }}</h1>
+  <p class="sub">Received {{ inquiry.created_at|datetime }} · <span class="badge badge-{{ inquiry.status.value }}">{{ inquiry.status.label }}</span>
+  {% if inquiry.notified_at %} · Email notification sent{% else %} · <span title="Check Settings › Contact details and the email configuration">No email notification was delivered</span>{% endif %}</p></div>
+  <div class="actions"><a class="btn btn-primary" href="mailto:{{ inquiry.email }}?subject=Re: {{ (inquiry.subject or 'Your enquiry to Ahenfor')|urlencode }}">{{ icon('mail') }} Reply by email</a>{% if inquiry.phone %}<a class="btn btn-secondary" href="tel:{{ inquiry.phone|replace(' ', '') }}">{{ icon('phone') }} Call</a>{% endif %}</div>
+</div>
+<div class="grid-2">
+  <section class="card">
+    <div class="card-head"><h2>Details</h2></div>
+    <div class="card-body">
+      <dl class="details">
+        <dt>Name</dt><dd>{{ inquiry.full_name }}</dd>
+        <dt>Email</dt><dd><a href="mailto:{{ inquiry.email }}">{{ inquiry.email }}</a></dd>
+        {% if inquiry.phone %}<dt>Phone</dt><dd>{{ inquiry.phone }}</dd>{% endif %}
+        {% if inquiry.organization %}<dt>Organisation</dt><dd>{{ inquiry.organization }}</dd>{% endif %}
+        {% if inquiry.subject %}<dt>Subject</dt><dd>{{ inquiry.subject }}</dd>{% endif %}
+        {% if inquiry.service %}<dt>Service</dt><dd>{{ inquiry.service }}</dd>{% endif %}
+        {% if inquiry.project_location %}<dt>Project location</dt><dd>{{ inquiry.project_location }}</dd>{% endif %}
+        {% if inquiry.timeline %}<dt>Timeline</dt><dd>{{ inquiry.timeline }}</dd>{% endif %}
+        {% if inquiry.budget_range %}<dt>Budget</dt><dd>{{ inquiry.budget_range }}</dd>{% endif %}
+        {% if inquiry.attachment %}<dt>Attachment</dt><dd><a href="{{ url_for('admin.media_private_file', asset_id=inquiry.attachment.id) }}">{{ icon('download') }} {{ inquiry.attachment.display_name }}</a> <span class="muted small">({{ inquiry.attachment.size_label }})</span></dd>{% endif %}
+      </dl>
+      <h3 style="margin-top:1.5rem">{{ 'Project description' if inquiry.kind.value == 'quote' else 'Message' }}</h3>
+      <div class="message-box">{{ inquiry.message }}</div>
+    </div>
+  </section>
+  <form class="card" method="post" novalidate>
+    {{ form.csrf_token }}
+    <div class="card-head"><h2>Follow-up</h2></div>
+    <div class="card-body fields">{{ field(form.status) }}{{ field(form.internal_notes, textarea_cls='tall') }}</div>
+    <div class="form-foot"><button class="btn btn-primary" type="submit">Save</button></div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Privacy Policy — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='Privacy policy', kicker='Legal' %}{% include "partials/page_header.html" %}{% endwith %}
+<section class="section">
+  <div class="container">
+    <div class="prose">
+      {# DRAFT TEMPLATE: have this text reviewed by the company's legal adviser (Ghana Data Protection Act, 2012 (Act 843)) before launch. #}
+      <p><strong>This policy is a draft and must be reviewed by the company before the website goes live.</strong></p>
+      <h2 style="font-size:1.5rem">What we collect</h2>
+      <p>When you use our contact or quote forms we collect the details you provide: your name, email address, telephone number, organisation, project information and any files you attach.</p>
+      <h2 style="font-size:1.5rem">How we use it</h2>
+      <p>We use this information only to respond to your enquiry and to prepare proposals you have asked for. We do not sell your information or use it for unrelated marketing.</p>
+      <h2 style="font-size:1.5rem">How we protect it</h2>
+      <p>Enquiries and attachments are stored privately and are only accessible to authorised company staff. Files you upload are never published on the website.</p>
+      <h2 style="font-size:1.5rem">Your rights</h2>
+      <p>You may ask us to access, correct or delete the personal information we hold about you by <a href="{{ url_for('public.contact') }}">contacting us</a>.</p>
+      <h2 style="font-size:1.5rem">Cookies</h2>
+      <p>This website uses only the cookies needed for forms to work securely. It does not use advertising or tracking cookies.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

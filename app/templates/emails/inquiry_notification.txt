@@ -1,0 +1,16 @@
+New website {{ 'quote request' if inquiry.kind.value == 'quote' else 'message' }}
+
+Name:         {{ inquiry.full_name }}
+Email:        {{ inquiry.email }}
+{% if inquiry.phone %}Phone:        {{ inquiry.phone }}
+{% endif %}{% if inquiry.organization %}Organisation: {{ inquiry.organization }}
+{% endif %}{% if inquiry.subject %}Subject:      {{ inquiry.subject }}
+{% endif %}{% if inquiry.service %}Service:      {{ inquiry.service }}
+{% endif %}{% if inquiry.project_location %}Location:     {{ inquiry.project_location }}
+{% endif %}{% if inquiry.timeline %}Timeline:     {{ inquiry.timeline }}
+{% endif %}{% if inquiry.budget_range %}Budget:       {{ inquiry.budget_range }}
+{% endif %}{% if inquiry.attachment %}Attachment:   yes (view in the admin dashboard)
+{% endif %}
+{{ inquiry.message }}
+
+Open in admin: {{ config.SITE_URL }}{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}

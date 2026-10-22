@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, img, project_card, event_item, news_card, section_kicker %}
+{% block title %}{{ site_name }} — {{ site.company_tagline }}{% endblock %}
+{% block body_class %}page-home{% endblock %}
+{% block og_image %}{% if hero.image %}<meta property="og:image" content="{{ hero.image.url if hero.image.url.startswith('http') else config.SITE_URL ~ hero.image.url }}">{% endif %}{% endblock %}
+
+{% block content %}
+{% set n = namespace(i=0) %}
+
+{# ---------------- Hero ---------------- #}
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero-media">
+    {% set poster = hero.poster or hero.image %}
+    {% if hero.media_type == 'video' and hero.video %}
+      {% if poster %}{{ img(poster, alt='', lazy=False, full=True) }}{% else %}<img src="{{ static_asset('images/hero-fallback.svg') }}" alt="">{% endif %}
+      <video muted loop playsinline preload="none" aria-hidden="true"
+             {% if poster %}poster="{{ poster.url }}"{% endif %}
+             data-hero-video data-src="{{ hero.video.url }}" data-type="{{ hero.video.mime_type }}"></video>
+    {% elif hero.image %}
+      {{ img(hero.image, alt=hero.alt_text or '', lazy=False, full=True) }}
+    {% else %}
+      <img src="{{ static_asset('images/hero-fallback.svg') }}" alt="" fetchpriority="high">
+    {% endif %}
+  </div>
+  <div class="container hero-content">
+    {% if hero.eyebrow %}<p class="kicker on-dark">{{ hero.eyebrow }}</p>{% endif %}
+    <h1 id="hero-title">{{ hero.headline }}</h1>
+    {% if hero.subheadline %}<p class="lede">{{ hero.subheadline }}</p>{% endif %}
+    <div class="hero-actions">
+      <a class="btn btn-accent" href="{{ hero_target_url(hero.primary_target) }}">{{ hero.primary_label }} {{ icon('arrow-right') }}</a>
+      {% if hero.secondary_label %}<a class="btn btn-outline-light" href="{{ hero_target_url(hero.secondary_target) }}">{{ hero.secondary_label }}</a>{% endif %}
+    </div>
+  </div>
+  <div class="hero-footer">
+    <div class="container">
+      <a class="scroll-cue" href="#explore">{{ icon('arrow-down') }} Explore</a>
+      {% if hero.media_type == 'video' and hero.video %}
+      <button class="video-toggle" type="button" data-video-toggle hidden aria-label="Pause background video">
+        {{ icon('pause', 'icon-pause') }}{{ icon('play', 'icon-play') }}<span data-video-label>Pause</span>
+      </button>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<div id="explore"></div>
+
+{# ---------------- Statistics (only verified, entered figures) ---------------- #}
+{% if stats %}
+<section class="section-navy section-tight on-dark" aria-label="Company in numbers">
+  <div class="container">
+    <div class="stats" style="--cols: {{ stats|length }}">
+      {% for s in stats %}
+      <div class="stat reveal"><div class="stat-value">{{ "{:,}".format(s.value) }}</div><div class="stat-label">{{ s.label }}</div></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- About ---------------- #}
+{% set n.i = n.i + 1 %}
+<section class="section" aria-labelledby="about-title">
+  <div class="container split">
+    <div class="reveal">
+      {% set about_img = site.media('about_image') %}
+      {% if about_img %}<figure class="figure">{{ img(about_img, sizes='(min-width: 900px) 50vw, 100vw') }}</figure>
+      {% else %}<div class="figure-placeholder" aria-hidden="true">{{ icon('building') }}</div>{% endif %}
+    </div>
+    <div class="reveal">
+      {{ section_kicker('%02d'|format(n.i), 'About Ahenfor') }}
+      <h2 id="about-title">{{ site.company_tagline }}</h2>
+      <div class="prose">{{ site.company_intro|paragraphs }}</div>
+      {% set values = site.lines('company_values') %}
+      {% if values %}
+      <ul class="values">
+        {% for title, desc in values[:4] %}<li><span class="num">{{ '%02d'|format(loop.index) }}</span><strong>{{ title }}</strong>{% if desc %}<p>{{ desc }}</p>{% endif %}</li>{% endfor %}
+      </ul>
+      {% endif %}
+      <p style="margin-top:2rem"><a class="link-arrow" href="{{ url_for('public.about') }}">More about the company {{ icon('arrow-right') }}</a></p>
+    </div>
+  </div>
+</section>
+
+{# ---------------- Services ---------------- #}
+{% if services %}
+{% set n.i = n.i + 1 %}
+<section class="section section-stone" aria-labelledby="services-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('%02d'|format(n.i), 'Services') }}<h2 id="services-title">Engineering and construction capability</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.services') }}">All services {{ icon('arrow-right') }}</a>
+    </div>
+    <div class="service-grid">
+      {% for s in services %}
+      <article class="service-card reveal">
+        <div class="service-top"><span class="service-icon">{{ icon(service_icon(s.name)) }}</span><span class="service-num">{{ '%02d'|format(loop.index) }}</span></div>
+        <h3><a class="card-link" href="{{ url_for('public.services', _anchor=s.slug) }}">{{ s.name }}</a></h3>
+        <p>{{ s.short_description }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Featured projects ---------------- #}
+{% if featured %}
+{% set n.i = n.i + 1 %}
+<section class="section" aria-labelledby="projects-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('%02d'|format(n.i), 'Featured projects') }}<h2 id="projects-title">Work on site and delivered</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.projects') }}">All projects {{ icon('arrow-right') }}</a>
+    </div>
+    <div class="card-grid">
+      {% for p in featured %}{{ project_card(p) }}{% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Upcoming projects ---------------- #}
+{% if upcoming_projects %}
+{% set n.i = n.i + 1 %}
+<section class="section section-stone" aria-labelledby="upcoming-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('%02d'|format(n.i), 'Coming up') }}<h2 id="upcoming-title">Upcoming projects</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.projects', status='upcoming') }}">All upcoming {{ icon('arrow-right') }}</a>
+    </div>
+    <ul class="row-list">
+      {% for p in upcoming_projects %}
+      <li><a class="row-link" href="{{ url_for('public.project_detail', slug=p.slug) }}">
+        <span class="meta">{{ p.location }}</span>
+        <span><h3>{{ p.name }}</h3><span class="meta">{{ p.category }}{% if p.start_date %} · Starts {{ p.start_date|date('%B %Y') }}{% endif %}</span></span>
+        {{ icon('arrow-up-right') }}
+      </a></li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Testimonials ---------------- #}
+{% if testimonials %}
+{% set n.i = n.i + 1 %}
+<section class="section section-navy on-dark" aria-labelledby="testimonials-title">
+  <div class="container">
+    <div class="section-head">{{ section_kicker('%02d'|format(n.i), 'Client perspective') }}<h2 id="testimonials-title">What our clients say</h2></div>
+    <div class="quote-grid" style="--cols: {{ testimonials|length }}">
+      {% for t in testimonials %}
+      <figure class="quote reveal">
+        <blockquote><p>“{{ t.quote }}”</p></blockquote>
+        <figcaption>
+          {% if t.portrait %}{{ img(t.portrait, alt='', sizes='52px') }}{% endif %}
+          <span><span class="who">{{ t.client_name }}</span><br><span class="org">{{ [t.client_role, t.organization]|select|join(', ') }}</span></span>
+        </figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Awards ---------------- #}
+{% if awards %}
+{% set n.i = n.i + 1 %}
+<section class="section" aria-labelledby="awards-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('%02d'|format(n.i), 'Credentials') }}<h2 id="awards-title">Awards and certifications</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.awards') }}">All credentials {{ icon('arrow-right') }}</a>
+    </div>
+    <ul class="award-list">
+      {% for a in awards %}
+      <li class="award reveal">
+        <div class="award-year">{{ a.year or '—' }}</div>
+        <div><h3>{{ a.title }}</h3><p class="issuer">{{ a.issuer }}</p></div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- News and events ---------------- #}
+{% if events or news %}
+{% set n.i = n.i + 1 %}
+<section class="section section-stone" aria-labelledby="news-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('%02d'|format(n.i), 'News & events') }}<h2 id="news-title">Latest from Ahenfor</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.news_events') }}">All news and events {{ icon('arrow-right') }}</a>
+    </div>
+    <div class="news-layout">
+      {% if events %}
+      <div>
+        <p class="news-col-title">Upcoming events</p>
+        <ul class="event-list">{% for e in events %}{{ event_item(e) }}{% endfor %}</ul>
+      </div>
+      {% endif %}
+      {% if news %}
+      <div>
+        <p class="news-col-title">Latest news</p>
+        <div class="news-stack">{% for p in (news[:2] if events else news) %}{{ news_card(p) }}{% endfor %}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta.html" %}
+{% endblock %}

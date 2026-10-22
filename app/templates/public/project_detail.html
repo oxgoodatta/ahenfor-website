@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, img, status_chip, project_card, section_kicker %}
+{% block title %}{{ project.name }} — Projects — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ project.short_description }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if project.cover_image %}<meta property="og:image" content="{{ project.cover_image.url if project.cover_image.url.startswith('http') else config.SITE_URL ~ project.cover_image.url }}">{% endif %}{% endblock %}
+
+{% macro update_media(u) %}
+  {% if u.media_items %}
+  <div class="photo-grid" data-gallery="update-{{ u.id }}">
+    {% for m in u.media_items %}
+    <a href="{{ m.media.url }}" data-lightbox data-caption="{{ m.caption }}">{{ img(m.media, alt=m.effective_alt or (u.title ~ ' — photo ' ~ loop.index), sizes='(min-width: 1000px) 260px, 50vw') }}</a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if u.video %}
+  <video controls preload="none" playsinline {% if u.media_items %}poster="{{ u.media_items[0].media.url }}"{% endif %}>
+    <source src="{{ u.video.url }}" type="{{ u.video.mime_type }}">
+    <a href="{{ u.video.url }}">Download the video</a>
+  </video>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<header class="page-header with-image on-dark">
+  {% if project.cover_image %}{{ img(project.cover_image, alt='', lazy=False, full=True, cls='bg') }}{% endif %}
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('public.home') }}">Home</a><span aria-hidden="true">/</span><a href="{{ url_for('public.projects') }}">Projects</a><span aria-hidden="true">/</span><span aria-current="page">{{ project.name }}</span></nav>
+    <p style="margin-bottom:1.25rem">{{ status_chip(project.status) }}</p>
+    <h1>{{ project.name }}</h1>
+    <p class="lede">{{ project.short_description }}</p>
+  </div>
+</header>
+
+{# ---- Key facts ---- #}
+{% set facts = [('Location', project.location), ('Category', project.category)] %}
+{% if project.start_date %}{% set facts = facts + [('Started', project.start_date|date('%B %Y'))] %}{% endif %}
+{% if project.status.value == 'completed' and project.actual_completion_date %}{% set facts = facts + [('Completed', project.actual_completion_date|date('%B %Y'))] %}
+{% elif project.estimated_completion_date and project.status.value != 'completed' %}{% set facts = facts + [('Est. completion', project.estimated_completion_date|date('%B %Y'))] %}{% endif %}
+{% if project.show_client and project.client_name %}{% set facts = facts + [('Client', project.client_name)] %}{% endif %}
+{% if project.show_value and project.project_value %}{% set facts = facts + [('Project value', project.project_value)] %}{% endif %}
+<section class="project-facts on-dark" aria-label="Project details">
+  <div class="container">
+    <dl style="--cols: {{ facts|length + (1 if project.progress_percent is not none else 0) }}">
+      {% for label, value in facts %}<div class="fact"><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}
+      {% if project.progress_percent is not none %}
+      <div class="fact">
+        <dt id="progress-label">Reported progress</dt>
+        <dd class="progress">
+          <span class="progress-label">{{ project.progress_percent }}%</span>
+          <div class="progress-track" role="progressbar" aria-labelledby="progress-label" aria-valuenow="{{ project.progress_percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ project.progress_percent }}%"></span></div>
+          <p class="progress-note">As reported by the project team</p>
+        </dd>
+      </div>
+      {% endif %}
+    </dl>
+  </div>
+</section>
+
+{# ---- Overview + latest update ---- #}
+<section class="section">
+  <div class="container overview">
+    <div>
+      {{ section_kicker('01', 'Overview') }}
+      <h2>About the project</h2>
+      <div class="prose">{{ (project.description or project.short_description)|paragraphs }}</div>
+      {% if project.cover_video %}
+      <video controls preload="none" playsinline style="width:100%;margin-top:2rem;background:#000" {% if project.cover_image %}poster="{{ project.cover_image.url }}"{% endif %}>
+        <source src="{{ project.cover_video.url }}" type="{{ project.cover_video.mime_type }}">
+      </video>
+      {% endif %}
+    </div>
+    {% if latest %}
+    <aside class="latest-card" aria-labelledby="latest-title">
+      <div class="head"><span class="meta">Latest update</span><time class="meta" datetime="{{ latest.update_date.isoformat() }}">{{ latest.update_date|short_date }}</time></div>
+      <div class="inner">
+        {% if latest.media_items %}{{ img(latest.media_items[0].media, alt=latest.media_items[0].effective_alt or latest.title, sizes='400px') }}{% endif %}
+        <p class="meta">{{ latest.phase.title }}</p>
+        <h3 id="latest-title">{{ latest.title }}</h3>
+        <a class="link-arrow" href="#update-{{ latest.id }}">See in timeline {{ icon('arrow-down') }}</a>
+      </div>
+    </aside>
+    {% endif %}
+  </div>
+</section>
+
+{# ---- Construction timeline ---- #}
+{% set visible_phases = phases|selectattr('updates')|list %}
+{% if phases %}
+<section class="section section-stone" aria-labelledby="timeline-title" id="progress">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('02', 'Construction progress') }}<h2 id="timeline-title">Phase by phase</h2></div>
+      <p class="lede">Dated updates and photographs recorded by the site team{% if not visible_phases %}. Updates will appear here as work progresses{% endif %}.</p>
+    </div>
+    <div class="timeline-wrap">
+      <nav class="phase-nav" aria-label="Construction phases" data-phase-nav>
+        <ol>
+          {% for v in phases %}
+          <li><a href="#phase-{{ v.phase.id }}"><span class="n">{{ '%02d'|format(loop.index) }}</span><span>{{ v.phase.title }}</span><span class="state">{{ v.phase.status.label }}{% if v.updates %} · {{ v.updates|length }} update{{ 's' if v.updates|length != 1 }}{% endif %}</span></a></li>
+          {% endfor %}
+        </ol>
+      </nav>
+      <div>
+        {% for v in phases %}
+        <article class="phase" id="phase-{{ v.phase.id }}" data-phase>
+          <div class="phase-head">
+            <span class="meta">Phase {{ '%02d'|format(loop.index) }}</span>
+            <span class="phase-status {{ v.phase.status.value }}">{{ v.phase.status.label }}</span>
+            {% if v.phase.start_date or v.phase.completed_date %}<span class="meta">{{ v.phase.start_date|short_date if v.phase.start_date }}{% if v.phase.completed_date %} – {{ v.phase.completed_date|short_date }}{% endif %}</span>{% endif %}
+            <h3>{{ v.phase.title }}</h3>
+          </div>
+          {% if v.phase.description %}<div class="phase-desc">{{ v.phase.description|paragraphs }}</div>{% endif %}
+          {% if v.updates %}
+          <ol class="updates">
+            {% for u in v.updates %}
+            <li class="update{% if latest and u.id == latest.id %} is-latest{% endif %}" id="update-{{ u.id }}">
+              <time datetime="{{ u.update_date.isoformat() }}">{{ u.update_date|date }}</time>
+              <h4>{{ u.title }}{% if latest and u.id == latest.id %}<span class="badge-latest">LATEST</span>{% endif %}{% if preview and not u.is_published %}<span class="badge-draft">DRAFT</span>{% endif %}</h4>
+              {% if u.body %}<div class="prose">{{ u.body|paragraphs }}</div>{% endif %}
+              {{ update_media(u) }}
+            </li>
+            {% endfor %}
+          </ol>
+          {% elif v.phase.status.value != 'upcoming' %}
+          <p class="phase-empty">Progress updates for this phase will be published soon.</p>
+          {% endif %}
+        </article>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{# ---- Gallery ---- #}
+{% if gallery|length > 3 %}
+<section class="section" aria-labelledby="gallery-title">
+  <div class="container">
+    <div class="section-head">{{ section_kicker('03', 'Gallery') }}<h2 id="gallery-title">Project photographs</h2></div>
+    <div class="photo-grid large" data-gallery="project-gallery">
+      {% for m in gallery %}
+      <a href="{{ m.media.url }}" data-lightbox data-caption="{{ m.caption or m.update.title }}">{{ img(m.media, alt=m.effective_alt or m.update.title, sizes='(min-width: 1000px) 300px, 50vw') }}</a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if related %}
+<section class="section section-stone" aria-labelledby="related-title">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('04', 'More work') }}<h2 id="related-title">Related projects</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.projects') }}">All projects {{ icon('arrow-right') }}</a>
+    </div>
+    <div class="card-grid">{% for p in related %}{{ project_card(p) }}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta.html" %}
+{% include "partials/lightbox.html" %}
+{% endblock %}
+
+{% block scripts %}<script src="{{ static_asset('js/galleries.js') }}" defer></script>{% endblock %}

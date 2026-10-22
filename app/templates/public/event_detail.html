@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, img, news_card %}
+{% block title %}{{ post.title }} — {{ site_name }}{% endblock %}
+{% block meta_description %}{{ post.summary }}{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block og_image %}{% if post.cover_image %}<meta property="og:image" content="{{ post.cover_image.url if post.cover_image.url.startswith('http') else config.SITE_URL ~ post.cover_image.url }}">{% endif %}{% endblock %}
+{% block content %}
+<header class="page-header on-dark">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('public.home') }}">Home</a><span aria-hidden="true">/</span><a href="{{ url_for('public.news_events') }}">News &amp; Events</a><span aria-hidden="true">/</span><span aria-current="page">{{ post.title|truncate(40) }}</span></nav>
+    <p class="kicker on-dark">{{ post.kind.label }}{% if post.is_event %} · {{ 'Past event' if post.is_past else 'Upcoming event' }}{% endif %}{% if preview and not post.is_published %} · DRAFT{% endif %}</p>
+    <h1>{{ post.title }}</h1>
+    <p class="lede">{{ post.summary }}</p>
+  </div>
+</header>
+<section class="section">
+  <div class="container article">
+    <div>
+      {% if post.cover_image %}<figure class="article-cover">{{ img(post.cover_image, alt=post.cover_image.alt_text or post.title, sizes='(min-width: 1000px) 800px, 100vw', lazy=False) }}</figure>{% endif %}
+      <div class="prose">{{ (post.body or post.summary)|paragraphs }}</div>
+      {% if post.video %}
+      <video controls preload="none" playsinline {% if post.cover_image %}poster="{{ post.cover_image.url }}"{% endif %}><source src="{{ post.video.url }}" type="{{ post.video.mime_type }}"></video>
+      {% endif %}
+    </div>
+    <aside>
+      <ul class="fact-list">
+        {% if post.is_event %}
+        <li><span class="meta">Date</span><strong><time datetime="{{ post.starts_at.isoformat() }}">{{ post.starts_at|datetime }}</time>{% if post.ends_at %} – {{ post.ends_at|datetime if post.ends_at.date() != post.starts_at.date() else post.ends_at.strftime('%H:%M') }}{% endif %}</strong></li>
+        {% if post.venue %}<li><span class="meta">Venue</span><strong>{{ post.venue }}</strong></li>{% endif %}
+        {% else %}
+        <li><span class="meta">Published</span><strong>{{ (post.published_at or post.created_at)|date }}</strong></li>
+        {% endif %}
+        <li><span class="meta">Type</span><strong>{{ post.kind.label }}</strong></li>
+      </ul>
+      {% if post.registration_url and not post.is_past %}
+      <p style="margin-top:1.5rem"><a class="btn btn-accent" href="{{ post.registration_url }}" target="_blank" rel="noopener nofollow">Register {{ icon('external') }}</a></p>
+      {% endif %}
+      <p style="margin-top:1.5rem"><a class="link-arrow" href="{{ url_for('public.news_events') }}">All news and events {{ icon('arrow-right') }}</a></p>
+    </aside>
+  </div>
+</section>
+{% if related %}
+<section class="section section-stone">
+  <div class="container">
+    <div class="section-head"><h2>More {{ post.kind.label|lower }}</h2></div>
+    <div class="card-grid">{% for p in related %}{{ news_card(p) }}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}

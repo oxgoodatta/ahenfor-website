@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, status_buttons, thumb, visibility_filter %}
+{% block title %}Awards & certifications{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Awards &amp; certifications</h1><p class="sub">Only verified awards, certifications and registrations.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('admin.award_new') }}">+ Add award or certification</a></div>
+</div>
+<section class="card">
+  <form class="toolbar" method="get"><input type="search" name="q" value="{{ q }}" placeholder="Search" aria-label="Search awards">{{ visibility_filter(visibilities, visibility) }}<button class="btn btn-secondary" type="submit">Search</button></form>
+  {% if items %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th></th><th>Title</th><th>Year</th><th>Document</th><th>Visibility</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>{% for a in items %}
+      <tr><td>{{ thumb(a.image) }}</td>
+        <td class="title-cell"><a href="{{ url_for('admin.award_edit', item_id=a.id) }}">{{ a.title }}</a><div class="muted small">{{ a.issuer }}</div></td>
+        <td>{{ a.year or '—' }}</td><td>{% if a.document %}<a href="{{ a.document.url }}" target="_blank" rel="noopener">PDF</a>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{{ pub_badge(a.publication_status) }}</td>
+        <td><div class="row-actions"><a class="btn btn-secondary btn-sm" href="{{ url_for('admin.award_edit', item_id=a.id) }}">Edit</a>{{ status_buttons('award', a) }}</div></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{{ icon('award') }}<h3>No awards or certifications yet</h3><p>Add credentials the company holds. Upload the certificate where possible.</p></div>{% endif %}
+</section>
+{% endblock %}

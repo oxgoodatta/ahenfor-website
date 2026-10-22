@@ -1,0 +1,22 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field, media_field %}
+{% block title %}{{ groups[group] }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>Company &amp; contact settings</h1><p class="sub">Text and details used across the website. Layout and design are fixed.</p></div></div>
+<nav class="tabs" aria-label="Settings sections">
+  {% for key, label in groups.items() %}<a href="{{ url_for('admin.settings', group=key) }}"{% if key == group %} aria-current="page"{% endif %}>{{ label }}</a>{% endfor %}
+</nav>
+{% if group == 'stats' %}<div class="callout">Only enter figures the company can verify. Leave a field blank to hide that statistic from the website.</div>{% endif %}
+<form class="card" method="post" enctype="multipart/form-data" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  <section class="form-section">
+    <div class="fields two">
+      {% for d in definitions %}
+        {% if d.kind == 'media' %}{{ media_field(form, d.key, 'image', d.label) }}
+        {% else %}{{ field(form[d.key], 'full' if d.kind in ('textarea', 'lines') else '', textarea_cls='tall' if d.kind == 'textarea' and d.max_length > 2000 else '') }}{% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  <div class="form-foot"><button class="btn btn-primary" type="submit">Save {{ groups[group]|lower }}</button></div>
+</form>
+{% endblock %}

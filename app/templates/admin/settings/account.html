@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field %}
+{% block title %}My account{% endblock %}
+{% block content %}
+<div class="page-head"><div><h1>My account</h1><p class="sub">{{ current_user.name }} · {{ current_user.email }}{% if current_user.last_login_at %} · last sign-in {{ current_user.last_login_at|datetime }}{% endif %}</p></div></div>
+<form class="card" method="post" novalidate style="max-width:560px">
+  {{ form.csrf_token }}
+  <div class="card-head"><h2>Change password</h2></div>
+  <div class="card-body fields">{{ field(form.current_password) }}{{ field(form.new_password) }}{{ field(form.confirm_password) }}
+    <p class="muted small">Use at least 12 characters. Changing your password signs out your other sessions.</p></div>
+  <div class="form-foot"><button class="btn btn-primary" type="submit">Change password</button></div>
+</form>
+{% endblock %}

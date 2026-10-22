@@ -1,0 +1,122 @@
+{% from "partials/macros.html" import icon %}
+
+{% macro field(f, cls='', textarea_cls='', label=None) -%}
+{% if f.type in ('BooleanField',) %}
+<div class="field {{ cls }}{% if f.errors %} has-error{% endif %}">
+  <label class="check">{{ f() }} <span>{{ label or f.label.text }}</span></label>
+  {% if f.description %}<p class="hint">{{ f.description }}</p>{% endif %}
+  {% for e in f.errors %}<p class="error">{{ e }}</p>{% endfor %}
+</div>
+{% elif f.type == 'RadioField' %}
+<div class="field {{ cls }}{% if f.errors %} has-error{% endif %}">
+  <span class="label">{{ label or f.label.text }}</span>
+  <div class="radio-row">{{ f() }}</div>
+  {% for e in f.errors %}<p class="error">{{ e }}</p>{% endfor %}
+</div>
+{% else %}
+<div class="field {{ cls }}{% if f.errors %} has-error{% endif %}">
+  <label for="{{ f.id }}">{{ label or f.label.text }}{% if f.flags.required %} <span class="req" aria-hidden="true">*</span>{% else %} <span class="opt">(optional)</span>{% endif %}</label>
+  {% set attrs = {} %}
+  {% if f.description %}{% set _ = attrs.update({'aria-describedby': f.id ~ '-hint'}) %}{% endif %}
+  {% if f.errors %}{% set _ = attrs.update({'aria-invalid': 'true'}) %}{% endif %}
+  {% if textarea_cls %}{% set _ = attrs.update({'class': textarea_cls}) %}{% endif %}
+  {{ f(**attrs) }}
+  {% if f.description %}<p class="hint" id="{{ f.id }}-hint">{{ f.description }}</p>{% endif %}
+  {% for e in f.errors %}<p class="error">{{ e }}</p>{% endfor %}
+</div>
+{% endif %}
+{%- endmacro %}
+
+{# A media slot: <base>_file (new upload) + <base>_id (current / library selection). #}
+{% macro media_field(form, base, kind='image', label='Image', help=None, cls='full') -%}
+{% set id_field = form[base ~ '_id'] %}
+{% set file_field = form[base ~ '_file'] %}
+{% set asset = media_asset(id_field.data) %}
+{% set profile = 'document' if kind == 'document' else kind %}
+{% set errors = file_field.errors|list + id_field.errors|list %}
+<div class="field {{ cls }}">
+  <span class="label">{{ label }} <span class="opt">(optional)</span></span>
+  <div class="media-field{% if errors %} has-error{% endif %}" data-media-field data-kind="{{ kind }}" data-profile="{{ profile }}">
+    <div class="media-field-body">
+      <div class="media-preview" data-preview>
+        {% if asset %}
+          {% if asset.is_image %}<img src="{{ asset.thumb_url }}" alt="">
+          {% elif asset.is_video %}<video src="{{ asset.url }}" muted preload="metadata"></video>
+          {% else %}<span class="doc">{{ icon('file') }}{{ asset.display_name }}</span>{% endif %}
+        {% else %}<span>No {{ kind }} selected</span>{% endif %}
+      </div>
+      <div>
+        <div class="media-buttons">
+          <label class="btn btn-secondary btn-sm file-btn">{{ icon('download') }} Upload {{ 'new ' if asset }}{{ kind }}
+            {{ file_field(accept=accept_for(profile), **{'data-file': '1', 'aria-label': 'Upload ' ~ label}) }}</label>
+          {% if kind != 'document' %}<button type="button" class="btn btn-secondary btn-sm" data-pick hidden>Choose from library</button>{% endif %}
+          <button type="button" class="btn btn-ghost btn-sm" data-clear {% if not asset %}hidden{% endif %}>Remove</button>
+        </div>
+        <p class="hint">{{ help or limits_for(profile) }}</p>
+        <div class="progress" data-progress hidden><span></span></div>
+        <p class="upload-status" data-status aria-live="polite"></p>
+      </div>
+    </div>
+    {{ id_field(**{'data-id': '1'}) }}
+  </div>
+  {% for e in errors %}<p class="error">{{ e }}</p>{% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro pub_badge(status) -%}<span class="badge badge-{{ status.value }}">{{ status.label }}</span>{%- endmacro %}
+{% macro life_badge(status) -%}<span class="badge badge-{{ status.value }}">{{ status.label }}</span>{%- endmacro %}
+
+{# Publish / unpublish / archive buttons for any publishable record. #}
+{% macro status_buttons(entity, obj, next=None, size='btn-sm', archive=True) -%}
+{% set status = obj.publication_status.value %}
+{% set back = next or request.full_path %}
+{% if status != 'published' %}
+<form class="inline" method="post" action="{{ url_for('admin.change_status', entity=entity, obj_id=obj.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="published"><input type="hidden" name="next" value="{{ back }}">
+  <button class="btn btn-success {{ size }}" type="submit">Publish</button>
+</form>
+{% else %}
+<form class="inline" method="post" action="{{ url_for('admin.change_status', entity=entity, obj_id=obj.id) }}" data-confirm="Unpublish this item? It will be hidden from the public website until you publish it again.">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="draft"><input type="hidden" name="next" value="{{ back }}">
+  <button class="btn btn-secondary {{ size }}" type="submit">Unpublish</button>
+</form>
+{% endif %}
+{% if archive and status != 'archived' %}
+<form class="inline" method="post" action="{{ url_for('admin.change_status', entity=entity, obj_id=obj.id) }}" data-confirm="Archive this item? It will be hidden from the website and from the main list, but nothing is deleted. You can restore it from the Archived filter.">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="archived"><input type="hidden" name="next" value="{{ back }}">
+  <button class="btn btn-danger {{ size }}" type="submit">Archive</button>
+</form>
+{% elif status == 'archived' %}
+<form class="inline" method="post" action="{{ url_for('admin.change_status', entity=entity, obj_id=obj.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="status" value="draft"><input type="hidden" name="next" value="{{ back }}">
+  <button class="btn btn-secondary {{ size }}" type="submit">Restore as draft</button>
+</form>
+{% endif %}
+{%- endmacro %}
+
+{% macro pager(pagination, endpoint) -%}
+{% if pagination.pages > 1 %}
+{% set args = request.args.to_dict() %}
+<nav class="pager" aria-label="Pagination">
+  {% if pagination.has_prev %}{% set _ = args.update(page=pagination.prev_num) %}<a href="{{ url_for(endpoint, **args) }}">‹ Prev</a>{% endif %}
+  {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if p %}{% set _ = args.update(page=p) %}{% if p == pagination.page %}<span aria-current="page">{{ p }}</span>{% else %}<a href="{{ url_for(endpoint, **args) }}">{{ p }}</a>{% endif %}
+    {% else %}<span>…</span>{% endif %}
+  {% endfor %}
+  {% if pagination.has_next %}{% set _ = args.update(page=pagination.next_num) %}<a href="{{ url_for(endpoint, **args) }}">Next ›</a>{% endif %}
+</nav>
+<p class="muted small" style="text-align:center;margin:0 0 1rem">Showing {{ pagination.first }}–{{ pagination.last }} of {{ pagination.total }}</p>
+{% endif %}
+{%- endmacro %}
+
+{% macro visibility_filter(visibilities, visibility) -%}
+<label class="visually-hidden" for="visibility">Visibility</label>
+<select id="visibility" name="visibility" data-autosubmit>
+  <option value="">Published &amp; drafts</option>
+  {% for v in visibilities %}<option value="{{ v.value }}"{% if v.value == visibility %} selected{% endif %}>{{ v.label }} only</option>{% endfor %}
+</select>
+{%- endmacro %}
+
+{% macro thumb(asset) -%}
+{% if asset and asset.is_image %}<img class="thumb" src="{{ asset.thumb_url }}" alt="" loading="lazy">{% else %}<span class="thumb-empty">{{ icon('image') }}</span>{% endif %}
+{%- endmacro %}

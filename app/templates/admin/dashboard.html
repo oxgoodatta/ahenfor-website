@@ -1,0 +1,73 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, thumb %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Welcome, {{ current_user.name.split(' ')[0] }}</h1><p class="sub">Here is what's happening on the website.</p></div>
+</div>
+
+{% if hero_pending %}<div class="callout">The homepage hero has unpublished draft changes. <a href="{{ url_for('admin.hero') }}">Review and publish them</a>.</div>{% endif %}
+
+<div class="quick-actions">
+  <a href="{{ url_for('admin.projects') }}">{{ icon('image') }} Add progress photos</a>
+  <a href="{{ url_for('admin.project_new') }}">{{ icon('building') }} Add a project</a>
+  <a href="{{ url_for('admin.post_new') }}">{{ icon('calendar') }} Post news or an event</a>
+  <a href="{{ url_for('admin.hero') }}">{{ icon('video') }} Change homepage hero</a>
+</div>
+
+<div class="stat-grid">
+  <a class="stat-card" href="{{ url_for('admin.projects', status='ongoing') }}"><div class="label">Ongoing projects</div><div class="value">{{ stats.ongoing }}</div></a>
+  <a class="stat-card" href="{{ url_for('admin.projects', status='upcoming') }}"><div class="label">Upcoming projects</div><div class="value">{{ stats.upcoming }}</div></a>
+  <a class="stat-card" href="{{ url_for('admin.projects', status='completed') }}"><div class="label">Completed projects</div><div class="value">{{ stats.completed }}</div></a>
+  <a class="stat-card" href="{{ url_for('admin.posts', when='upcoming') }}"><div class="label">Upcoming events</div><div class="value">{{ stats.upcoming_events }}</div></a>
+  <a class="stat-card{% if stats.new_inquiries %} attention{% endif %}" href="{{ url_for('admin.inquiries', status='new') }}"><div class="label">New inquiries</div><div class="value">{{ stats.new_inquiries }}</div></a>
+  <a class="stat-card" href="{{ url_for('admin.projects', visibility='draft') }}"><div class="label">Draft projects</div><div class="value">{{ stats.draft_projects }}</div></a>
+  <a class="stat-card" href="{{ url_for('admin.projects', status='on_hold') }}"><div class="label">On hold</div><div class="value">{{ stats.on_hold }}</div></a>
+</div>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="recent-updates">
+    <div class="card-head"><h2 id="recent-updates">Recent progress updates</h2><a class="btn btn-secondary btn-sm" href="{{ url_for('admin.projects') }}">All projects</a></div>
+    {% if stats.recent_updates %}
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th>Update</th><th>Project</th><th>Photos</th><th>Status</th></tr></thead>
+      <tbody>
+      {% for u in stats.recent_updates %}
+        <tr>
+          <td class="title-cell"><a href="{{ url_for('admin.update_edit', update_id=u.id) }}">{{ u.title }}</a><div class="muted small">{{ u.update_date|short_date }} · {{ u.phase.title }}</div></td>
+          <td><a href="{{ url_for('admin.project_progress', project_id=u.phase.project_id) }}">{{ u.phase.project.name }}</a></td>
+          <td>{{ u.media_items|length }}</td>
+          <td>{{ pub_badge(u.publication_status) }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    {% else %}
+    <div class="empty">{{ icon('image') }}<h3>No progress updates yet</h3><p>Open a project and choose <strong>Manage progress</strong> to add the first update.</p></div>
+    {% endif %}
+  </section>
+
+  <div>
+    <section class="card" aria-labelledby="recent-inquiries">
+      <div class="card-head"><h2 id="recent-inquiries">Latest inquiries</h2><a class="btn btn-secondary btn-sm" href="{{ url_for('admin.inquiries') }}">All</a></div>
+      {% if stats.recent_inquiries %}
+      <div class="table-wrap"><table class="data"><tbody>
+        {% for i in stats.recent_inquiries %}
+        <tr><td class="title-cell"><a href="{{ url_for('admin.inquiry_detail', inquiry_id=i.id) }}">{{ i.full_name }}</a><div class="muted small">{{ i.kind.label }} · {{ i.created_at|short_date }}</div></td><td style="text-align:right"><span class="badge badge-{{ i.status.value }}">{{ i.status.label }}</span></td></tr>
+        {% endfor %}
+      </tbody></table></div>
+      {% else %}<div class="empty"><p>No inquiries yet. Messages from the contact and quote forms will appear here.</p></div>{% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="recent-uploads">
+      <div class="card-head"><h2 id="recent-uploads">Recent uploads</h2><a class="btn btn-secondary btn-sm" href="{{ url_for('admin.media_library') }}">Library</a></div>
+      {% if stats.recent_uploads %}
+      <div class="media-grid" style="grid-template-columns:repeat(4,1fr);padding:1rem;gap:.5rem">
+        {% for a in stats.recent_uploads %}<a class="media-tile" href="{{ url_for('admin.media_detail', asset_id=a.id) }}" title="{{ a.display_name }}"><div class="pv">{% if a.is_image %}<img src="{{ a.thumb_url }}" alt="" loading="lazy">{% else %}{{ icon('video' if a.is_video else 'file') }}{% endif %}</div></a>{% endfor %}
+      </div>
+      {% else %}<div class="empty"><p>No files uploaded yet.</p></div>{% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

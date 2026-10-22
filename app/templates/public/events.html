@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, event_item, news_card, pagination_nav %}
+{% block title %}News and Events — {{ site_name }}{% endblock %}
+{% block meta_description %}Company news, project announcements, milestones and events from {{ site_name }}.{% endblock %}
+{% block content %}
+{% with title='News & Events', lede='Announcements, milestones and upcoming events.', kicker='Updates' %}{% include "partials/page_header.html" %}{% endwith %}
+<section class="section">
+  <div class="container">
+    <nav class="tabs" aria-label="News and events views">
+      <a href="{{ url_for('public.news_events', view='upcoming') }}"{% if view == 'upcoming' %} aria-current="page"{% endif %}>Upcoming events</a>
+      <a href="{{ url_for('public.news_events', view='news') }}"{% if view == 'news' %} aria-current="page"{% endif %}>News</a>
+      <a href="{{ url_for('public.news_events', view='past') }}"{% if view == 'past' %} aria-current="page"{% endif %}>Past events</a>
+    </nav>
+
+    {% if posts %}
+      {% if view == 'news' %}
+        <div class="card-grid">{% for p in posts %}{{ news_card(p, heading='h2') }}{% endfor %}</div>
+      {% else %}
+        <ul class="event-list">{% for p in posts %}{{ event_item(p) }}{% endfor %}</ul>
+      {% endif %}
+      {{ pagination_nav(pagination, 'public.news_events') }}
+    {% else %}
+      <div class="empty-state">
+        <h2 style="font-size:1.4rem">{% if view == 'upcoming' %}No upcoming events right now{% elif view == 'past' %}No past events yet{% else %}No news yet{% endif %}</h2>
+        <p>Check back soon{% if view != 'news' %}, or read our <a href="{{ url_for('public.news_events', view='news') }}">latest news</a>{% endif %}.</p>
+      </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

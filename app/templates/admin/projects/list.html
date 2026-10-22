@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, life_badge, status_buttons, pager, thumb %}
+{% block title %}Projects{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Projects</h1><p class="sub">Every project has its own phases, progress updates and photos.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('admin.project_new') }}">+ Add project</a></div>
+</div>
+
+<section class="card">
+  <form class="toolbar" method="get" role="search">
+    <label class="visually-hidden" for="q">Search projects</label>
+    <input type="search" id="q" name="q" value="{{ q }}" placeholder="Search by name, location or reference">
+    <label class="visually-hidden" for="status">Project status</label>
+    <select id="status" name="status" data-autosubmit>
+      <option value="">All statuses</option>
+      {% for s in statuses %}<option value="{{ s.value }}"{% if s.value == status %} selected{% endif %}>{{ s.label }}</option>{% endfor %}
+    </select>
+    <label class="visually-hidden" for="visibility">Visibility</label>
+    <select id="visibility" name="visibility" data-autosubmit>
+      <option value="">Published &amp; drafts</option>
+      {% for v in visibilities %}<option value="{{ v.value }}"{% if v.value == visibility %} selected{% endif %}>{{ v.label }} only</option>{% endfor %}
+    </select>
+    <button class="btn btn-secondary" type="submit">Search</button>
+    {% if q or status or visibility %}<a class="btn btn-ghost" href="{{ url_for('admin.projects') }}">Clear</a>{% endif %}
+  </form>
+
+  {% if projects %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th></th><th>Project</th><th>Status</th><th>Visibility</th><th>Last updated</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>
+    {% for p in projects %}
+      <tr>
+        <td>{{ thumb(p.cover_image) }}</td>
+        <td class="title-cell">
+          <a href="{{ url_for('admin.project_progress', project_id=p.id) }}">{{ p.name }}</a>
+          <div class="muted small">{{ p.location }}{% if p.reference_code %} · <span class="mono">{{ p.reference_code }}</span>{% endif %}</div>
+          {% if p.is_featured %}<span class="badge badge-featured">Featured</span>{% endif %}
+          {% if p.is_sample %}<span class="badge">Sample content</span>{% endif %}
+        </td>
+        <td>{{ life_badge(p.status) }}</td>
+        <td>{{ pub_badge(p.publication_status) }}</td>
+        <td class="nowrap muted small">{{ p.updated_at|short_date }}</td>
+        <td>
+          <div class="row-actions">
+            <a class="btn btn-sm" href="{{ url_for('admin.project_progress', project_id=p.id) }}">Manage progress</a>
+            <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.project_edit', project_id=p.id) }}">Edit</a>
+            <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.project_preview', project_id=p.id) }}" target="_blank" rel="noopener">Preview</a>
+            {{ status_buttons('project', p, archive=False) }}
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {{ pager(pagination, 'admin.projects') }}
+  {% else %}
+  <div class="empty">{{ icon('building') }}
+    {% if q or status or visibility %}<h3>No projects match these filters</h3><p><a href="{{ url_for('admin.projects') }}">Clear the filters</a> to see all projects.</p>
+    {% else %}<h3>No projects yet</h3><p>Start by adding your first project. It stays private as a draft until you publish it.</p><p><a class="btn btn-primary" href="{{ url_for('admin.project_new') }}">+ Add project</a></p>{% endif %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

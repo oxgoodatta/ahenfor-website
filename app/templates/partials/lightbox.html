@@ -1,0 +1,12 @@
+{% from "partials/macros.html" import icon %}
+<dialog class="lightbox" data-lightbox-dialog aria-label="Photo viewer">
+  <div class="lightbox-inner">
+    <div class="lightbox-bar"><span data-lightbox-count></span><button type="button" data-lightbox-close aria-label="Close photo viewer">{{ icon('close') }}</button></div>
+    <div class="lightbox-stage">
+      <button type="button" class="prev" data-lightbox-prev aria-label="Previous photo">{{ icon('chevron-left') }}</button>
+      <img alt="" data-lightbox-img>
+      <button type="button" class="next" data-lightbox-next aria-label="Next photo">{{ icon('chevron-right') }}</button>
+    </div>
+    <p class="lightbox-caption" data-lightbox-caption aria-live="polite"></p>
+  </div>
+</dialog>

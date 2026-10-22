@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, img, section_kicker %}
+{% block title %}About — {{ site_name }}{% endblock %}
+{% block content %}
+{% with title='About Ahenfor', lede=site.company_tagline, kicker='Who we are' %}{% include "partials/page_header.html" %}{% endwith %}
+
+<section class="section">
+  <div class="container split">
+    <div class="reveal">
+      {% set about_img = site.media('about_image') %}
+      {% if about_img %}<figure class="figure">{{ img(about_img, sizes='(min-width: 900px) 50vw, 100vw', lazy=False) }}</figure>
+      {% else %}<div class="figure-placeholder" aria-hidden="true">{{ icon('building') }}</div>{% endif %}
+    </div>
+    <div class="reveal">
+      {{ section_kicker('01', 'The company') }}
+      <h2>{{ site_name }}</h2>
+      <div class="prose">{{ site.company_intro|paragraphs }}</div>
+    </div>
+  </div>
+</section>
+
+{% if site.company_mission or site.company_vision %}
+<section class="section section-navy on-dark">
+  <div class="container split" style="align-items:start">
+    {% if site.company_mission %}<div class="reveal">{{ section_kicker('02', 'Mission') }}<p class="lede" style="color:#fff">{{ site.company_mission }}</p></div>{% endif %}
+    {% if site.company_vision %}<div class="reveal">{{ section_kicker('03', 'Vision') }}<p class="lede" style="color:#fff">{{ site.company_vision }}</p></div>{% endif %}
+  </div>
+</section>
+{% endif %}
+
+{% set values = site.lines('company_values') %}
+{% if values %}
+<section class="section">
+  <div class="container">
+    <div class="section-head">{{ section_kicker('04', 'Core values') }}<h2>How we work</h2></div>
+    <div class="service-grid">
+      {% for title, desc in values %}
+      <article class="service-card reveal"><span class="service-num">{{ '%02d'|format(loop.index) }}</span><h3>{{ title }}</h3>{% if desc %}<p>{{ desc }}</p>{% endif %}</article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+
+{% if site.company_history %}
+<section class="section section-stone">
+  <div class="container split" style="align-items:start">
+    <div>{{ section_kicker('05', 'History') }}<h2>Our story</h2></div>
+    <div class="prose reveal">{{ site.company_history|paragraphs }}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if stats %}
+<section class="section-navy section-tight on-dark" aria-label="Company in numbers">
+  <div class="container"><div class="stats" style="--cols: {{ stats|length }}">
+    {% for s in stats %}<div class="stat"><div class="stat-value">{{ "{:,}".format(s.value) }}</div><div class="stat-label">{{ s.label }}</div></div>{% endfor %}
+  </div></div>
+</section>
+{% endif %}
+
+{% if services %}
+<section class="section">
+  <div class="container">
+    <div class="section-head split">
+      <div>{{ section_kicker('06', 'What we do') }}<h2>Services</h2></div>
+      <a class="link-arrow head-action" href="{{ url_for('public.services') }}">All services {{ icon('arrow-right') }}</a>
+    </div>
+    <ul class="row-list">
+      {% for s in services %}<li><a class="row-link" href="{{ url_for('public.services', _anchor=s.slug) }}"><span class="meta">{{ '%02d'|format(loop.index) }}</span><span><h3>{{ s.name }}</h3><span class="meta">{{ s.short_description|truncate(90) }}</span></span>{{ icon('arrow-up-right') }}</a></li>{% endfor %}
+    </ul>
+  </div>
+</section>
+{% endif %}
+
+{% include "partials/cta.html" %}
+{% endblock %}

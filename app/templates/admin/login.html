@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sign in — Ahenfor Admin</title>
+  <link rel="icon" href="{{ static_asset('images/favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ static_asset('css/admin.css') }}">
+</head>
+<body>
+{% from "admin/_macros.html" import field %}
+<main class="login-page">
+  <div class="login-card">
+    <div class="sidebar-brand"><span class="mark">A</span><span><strong>AHENFOR</strong><small>Website administration</small></span></div>
+    <h1 style="font-size:1.35rem">Sign in</h1>
+    <p class="muted">For authorised company staff only.</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}<div class="alert alert-{{ cat }}" role="alert" style="margin-bottom:1rem">{{ msg }}</div>{% endfor %}
+    {% endwith %}
+    <form method="post" novalidate>
+      {{ form.csrf_token }}
+      <div class="fields">
+        {{ field(form.email) }}
+        {{ field(form.password) }}
+      </div>
+      <button class="btn" type="submit">Sign in</button>
+    </form>
+    <p class="muted small" style="margin-top:1.25rem">Forgotten your password? Ask the site developer to reset it with <code>flask set-password</code>.</p>
+  </div>
+</main>
+</body>
+</html>

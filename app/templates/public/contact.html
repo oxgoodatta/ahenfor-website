@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, field, flashes %}
+{% block title %}Contact — {{ site_name }}{% endblock %}
+{% block meta_description %}Contact {{ site_name }} about a project, partnership or general enquiry.{% endblock %}
+{% block content %}
+{% with title='Contact us', lede='Questions about a project or our services? Send a message and our team will respond.', kicker='Get in touch' %}{% include "partials/page_header.html" %}{% endwith %}
+<section class="section">
+  <div class="container form-layout">
+    <div>
+      {{ flashes() }}
+      {% if sent %}
+        <h2>Message received</h2>
+        <p class="lede">Thank you for getting in touch. Planning a project? You can also <a href="{{ url_for('public.request_quote') }}">request a quote</a>.</p>
+      {% else %}
+      <h2 style="font-size:1.8rem">Send a message</h2>
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="hp-field" aria-hidden="true">{{ form.company_website.label }}{{ form.company_website(tabindex='-1', autocomplete='off') }}</div>
+        <div class="form-grid">
+          {{ field(form.full_name) }}
+          {{ field(form.email) }}
+          {{ field(form.phone) }}
+          {{ field(form.subject) }}
+          {{ field(form.message, 'full') }}
+        </div>
+        <div class="form-actions">
+          <button class="btn" type="submit">Send message {{ icon('arrow-right') }}</button>
+          <p class="form-note">We use your details only to respond to this message. See our <a href="{{ url_for('public.privacy') }}">privacy policy</a>.</p>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+    <aside class="contact-panel on-dark">
+      <h3>Contact details</h3>
+      <ul>
+        {% if site.contact_phone %}<li>{{ icon('phone') }}<div><span class="meta">Phone</span><a href="tel:{{ site.contact_phone|replace(' ', '') }}">{{ site.contact_phone }}</a></div></li>{% endif %}
+        {% if site.contact_email %}<li>{{ icon('mail') }}<div><span class="meta">Email</span><a href="mailto:{{ site.contact_email }}">{{ site.contact_email }}</a></div></li>{% endif %}
+        {% if site.whatsapp_url %}<li>{{ icon('chat') }}<div><span class="meta">WhatsApp</span><a href="{{ site.whatsapp_url }}" target="_blank" rel="noopener">Chat on WhatsApp</a></div></li>{% endif %}
+        {% if site.contact_address %}<li>{{ icon('pin') }}<div><span class="meta">Office</span>{{ site.contact_address }}{% if site.contact_map_url %}<br><a href="{{ site.contact_map_url }}" target="_blank" rel="noopener">Get directions</a>{% endif %}</div></li>{% endif %}
+        {% if site.contact_hours %}<li>{{ icon('clock') }}<div><span class="meta">Hours</span>{{ site.contact_hours }}</div></li>{% endif %}
+        <li>{{ icon('file') }}<div><span class="meta">Project enquiries</span><a href="{{ url_for('public.request_quote') }}">Request a quote</a></div></li>
+      </ul>
+    </aside>
+  </div>
+</section>
+{% endblock %}

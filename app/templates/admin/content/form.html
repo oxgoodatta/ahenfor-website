@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field, media_field, pub_badge %}
+{# Generic form page. Routes pass `sections` = [(title, [field names])]. A name with
+   matching <name>_file / <name>_id fields is rendered as a media slot. #}
+{% block title %}{{ ('Add ' if is_new else 'Edit ') ~ noun }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="crumbs"><a href="{{ url_for(list_endpoint) }}">{{ noun|capitalize }}s</a> › {{ 'New' if is_new else 'Edit' }}</div>
+  <h1>{{ 'Add ' ~ noun if is_new else 'Edit ' ~ noun }}</h1>
+  {% if not is_new %}<p class="sub">{{ pub_badge(obj.publication_status) }}</p>{% endif %}</div>
+</div>
+{% if notice %}<div class="callout">{{ notice }}</div>{% endif %}
+<form class="card" method="post" enctype="multipart/form-data" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  {% for title, names in sections %}
+  <section class="form-section"><h2><span class="step">{{ loop.index }}</span> {{ title }}</h2>
+    <div class="fields two">
+      {% for name in names %}
+        {% if (name ~ '_file') in form and (name ~ '_id') in form %}
+          {% set label = form[name ~ '_file'].label.text %}
+          {{ media_field(form, name, 'document' if name == 'document' else 'image', label) }}
+        {% elif form[name].type in ('TextAreaField',) %}
+          {{ field(form[name], 'full') }}
+        {% else %}
+          {{ field(form[name], 'full' if form[name].type == 'BooleanField' else '') }}
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <div class="form-foot">
+    <a class="btn btn-ghost" href="{{ url_for(list_endpoint) }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">{{ 'Create' if is_new else 'Save changes' }}</button>
+  </div>
+</form>
+{% endblock %}

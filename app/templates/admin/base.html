@@ -1,0 +1,98 @@
+{% from "partials/macros.html" import icon %}<!doctype html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Admin{% endblock %} — Ahenfor Admin</title>
+  <link rel="icon" href="{{ static_asset('images/favicon.svg') }}" type="image/svg+xml">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="{{ static_asset('css/admin.css') }}">
+</head>
+<body data-upload-url="{{ url_for('admin.media_upload') }}" data-library-url="{{ url_for('admin.media_library_json') }}"
+      data-limits='{{ {"image": config.MAX_IMAGE_BYTES, "video": config.MAX_VIDEO_BYTES, "document": config.MAX_DOCUMENT_BYTES}|tojson }}'>
+{% include "partials/icons.html" %}
+{% set ep = request.endpoint or '' %}
+{% macro nav(endpoint, label, ico, match=(), count=None) -%}
+  <li><a href="{{ url_for(endpoint) }}"{% if ep == endpoint or ep in match %} aria-current="page"{% endif %}>{{ icon(ico) }} {{ label }}{% if count %}<span class="count">{{ count }}</span>{% endif %}</a></li>
+{%- endmacro %}
+<div class="admin-shell">
+  <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
+    <a class="sidebar-brand" href="{{ url_for('admin.dashboard') }}"><span class="mark">A</span><span><strong>AHENFOR</strong><small>Website admin</small></span></a>
+    <nav class="side-nav">
+      <ul>{{ nav('admin.dashboard', 'Dashboard', 'gear') }}</ul>
+      <h2>Projects</h2>
+      <ul>
+        {{ nav('admin.projects', 'All projects', 'building', ('admin.project_new', 'admin.project_edit', 'admin.project_progress', 'admin.phase_new', 'admin.phase_edit', 'admin.update_new', 'admin.update_edit')) }}
+      </ul>
+      <h2>Website content</h2>
+      <ul>
+        {{ nav('admin.hero', 'Homepage hero', 'image') }}
+        {{ nav('admin.media_library', 'Media library', 'video', ('admin.media_detail',)) }}
+        {{ nav('admin.posts', 'News & events', 'calendar', ('admin.post_new', 'admin.post_edit')) }}
+        {{ nav('admin.services', 'Services', 'hardhat', ('admin.service_new', 'admin.service_edit')) }}
+        {{ nav('admin.awards', 'Awards & certifications', 'award', ('admin.award_new', 'admin.award_edit')) }}
+        {{ nav('admin.testimonials', 'Testimonials', 'chat', ('admin.testimonial_new', 'admin.testimonial_edit')) }}
+      </ul>
+      <h2>Enquiries</h2>
+      <ul>{{ nav('admin.inquiries', 'Inquiries', 'mail', ('admin.inquiry_detail',), new_inquiry_count()) }}</ul>
+      <h2>Settings</h2>
+      <ul>
+        {{ nav('admin.settings', 'Company & contact', 'clipboard') }}
+        {{ nav('admin.account', 'My account', 'pin') }}
+      </ul>
+    </nav>
+    <div class="sidebar-foot"><a href="{{ url_for('public.home') }}" target="_blank" rel="noopener">View website {{ icon('external') }}</a></div>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <button class="btn btn-ghost btn-icon menu-btn" type="button" data-sidebar-toggle aria-controls="sidebar" aria-expanded="false"><span class="visually-hidden">Open menu</span>{{ icon('menu') }}</button>
+      <span class="spacer"></span>
+      <div class="user">
+        <span class="avatar" aria-hidden="true">{{ current_user.name[:1]|upper }}</span>
+        <span>{{ current_user.name }}</span>
+        <form class="inline" method="post" action="{{ url_for('admin.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-ghost btn-sm" type="submit">Sign out</button>
+        </form>
+      </div>
+    </header>
+    <main class="content" id="main">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-stack" role="status">
+        {% for cat, msg in messages %}<div class="alert alert-{{ cat }}"><span>{{ msg }}</span><button class="close" type="button" data-dismiss aria-label="Dismiss">{{ icon('close') }}</button></div>{% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<dialog class="modal small" id="confirm-dialog" aria-labelledby="confirm-title">
+  <div class="modal-head"><h2 id="confirm-title">Please confirm</h2></div>
+  <div class="modal-body"><p data-confirm-message></p></div>
+  <div class="modal-foot">
+    <button type="button" class="btn btn-secondary" data-confirm-cancel>Cancel</button>
+    <button type="button" class="btn" data-confirm-ok>Yes, continue</button>
+  </div>
+</dialog>
+
+<dialog class="modal" id="media-picker" aria-labelledby="picker-title">
+  <div class="modal-head"><h2 id="picker-title">Choose from the media library</h2><button type="button" class="btn btn-ghost btn-icon" data-picker-close aria-label="Close">{{ icon('close') }}</button></div>
+  <div class="modal-body">
+    <div class="toolbar" style="padding:0 0 1rem;border:0"><input type="search" placeholder="Search by file name or description" data-picker-search aria-label="Search media"></div>
+    <div class="picker-grid" data-picker-grid></div>
+    <p class="muted" data-picker-empty hidden>No matching media yet. Upload files from the form instead.</p>
+    <div style="text-align:center;margin-top:1rem"><button type="button" class="btn btn-secondary btn-sm" data-picker-more hidden>Load more</button></div>
+  </div>
+  <div class="modal-foot"><span class="muted small" data-picker-count style="margin-right:auto"></span><button type="button" class="btn btn-secondary" data-picker-close>Cancel</button><button type="button" class="btn" data-picker-confirm>Use selected</button></div>
+</dialog>
+
+<script src="{{ static_asset('js/admin.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,29 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field %}
+{% block title %}{{ 'Edit phase' if phase else 'Add phase' }} — {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="crumbs"><a href="{{ url_for('admin.projects') }}">Projects</a> › <a href="{{ url_for('admin.project_progress', project_id=project.id) }}">{{ project.name }}</a> › {{ 'Edit phase' if phase else 'Add phase' }}</div>
+    <h1>{{ 'Edit phase: ' ~ phase.title if phase else 'Add a construction phase' }}</h1>
+    <p class="sub">Project: <strong>{{ project.name }}</strong></p>
+  </div>
+</div>
+<form class="card" method="post" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  <section class="form-section">
+    <div class="fields two">
+      {{ field(form.title, 'full') }}
+      {{ field(form.status) }}
+      <span></span>
+      {{ field(form.start_date) }}
+      {{ field(form.completed_date) }}
+      {{ field(form.description, 'full') }}
+    </div>
+  </section>
+  <div class="form-foot">
+    <a class="btn btn-ghost" href="{{ url_for('admin.project_progress', project_id=project.id) }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">{{ 'Save phase' if phase else 'Add phase' }}</button>
+  </div>
+</form>
+{% endblock %}

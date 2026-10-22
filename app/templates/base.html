@@ -1,0 +1,51 @@
+{% from "partials/macros.html" import icon %}<!doctype html>
+<html lang="en-GH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ site.company_intro|truncate(158, True, '…') }}{% endblock %}">
+  {% if preview %}<meta name="robots" content="noindex, nofollow">{% endif %}
+  <link rel="canonical" href="{% block canonical %}{{ canonical_url() }}{% endblock %}">
+  <meta property="og:site_name" content="{{ site_name }}">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title" content="{{ self.title() }}">
+  <meta property="og:description" content="{{ self.meta_description() }}">
+  <meta property="og:url" content="{{ canonical_url() }}">
+  {% block og_image %}{% endblock %}
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="theme-color" content="#0b1a33">
+  <link rel="icon" href="{{ static_asset('images/favicon.svg') }}" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="{{ static_asset('css/main.css') }}">
+  {% block structured_data %}
+  <script type="application/ld+json">{{ organization_jsonld()|tojson }}</script>
+  {% endblock %}
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}{% if preview %} has-preview{% endif %}">
+  {% include "partials/icons.html" %}
+  <a class="skip-link" href="#main">Skip to content</a>
+  {% if preview %}
+  <div class="preview-bar" role="note">
+    <strong>Preview</strong> — includes unpublished content and is only visible to signed-in administrators.
+    <a href="{{ url_for('admin.dashboard') }}">Back to admin</a>
+  </div>
+  {% elif show_sample_banner() %}
+  <div class="notice-bar" role="note"><strong>Sample content:</strong> some projects and articles on this site are placeholders for development and are not real company information.</div>
+  {% endif %}
+
+  {% include "partials/navbar.html" %}
+
+  <main id="main" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/footer.html" %}
+
+  <script src="{{ static_asset('js/main.js') }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

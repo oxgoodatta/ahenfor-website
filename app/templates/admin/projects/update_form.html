@@ -1,0 +1,98 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import field, media_field, pub_badge %}
+{% block title %}{{ 'Add progress update' if is_new else 'Edit update' }} — {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="crumbs"><a href="{{ url_for('admin.projects') }}">Projects</a> › <a href="{{ url_for('admin.project_progress', project_id=project.id) }}">{{ project.name }}</a> › {{ 'New update' if is_new else update.title }}</div>
+    <h1>{{ 'Add a progress update' if is_new else 'Edit progress update' }}</h1>
+    {% if not is_new %}<p class="sub">{{ pub_badge(update.publication_status) }} Created {{ update.created_at|short_date }}</p>{% endif %}
+  </div>
+  {% if not is_new %}<div class="actions"><a class="btn btn-secondary" href="{{ url_for('admin.update_preview', update_id=update.id) }}" target="_blank" rel="noopener">Preview on project page</a></div>{% endif %}
+</div>
+
+<div class="target-banner" role="note" data-target-banner data-phases='{{ phases_by_id|tojson }}'>
+  {{ icon('pin') }}
+  <div>You are {{ 'adding' if is_new else 'editing' }} an update for<br>
+    <strong>{{ project.name }}</strong> › <strong data-target-phase>{{ phases_by_id.get(form.phase_id.data, '') }}</strong></div>
+</div>
+
+<form class="card" method="post" enctype="multipart/form-data" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  <section class="form-section"><h2><span class="step">1</span> What happened on site</h2>
+    <div class="fields two">
+      {{ field(form.phase_id) }}
+      {{ field(form.update_date) }}
+      {{ field(form.title, 'full') }}
+      {{ field(form.body, 'full') }}
+    </div>
+  </section>
+
+  <section class="form-section" id="photos"><h2><span class="step">2</span> Photos</h2>
+    <p class="section-help">Upload as many site photos as you need. Add a short caption so visitors understand what they are seeing. The first photo is used as the preview.</p>
+    <div class="dropzone" data-dropzone data-max="{{ max_photos }}">
+      {{ icon('image') }}
+      <p><strong>Drag photos here</strong> or</p>
+      <label class="btn btn-secondary file-btn">Choose photos {{ form.photos(multiple=True, accept=accept_for('image'), **{'data-multi-file': '1'}) }}</label>
+      <button type="button" class="btn btn-ghost" data-gallery-pick hidden>Choose from library</button>
+      <p class="muted small">{{ limits_for('image') }} Several files can be selected at once.</p>
+    </div>
+    <ul class="upload-queue" data-upload-queue aria-live="polite"></ul>
+    <p class="gallery-count" data-gallery-count style="margin-top:1rem"></p>
+    <ol class="gallery-items" data-gallery-items>
+      {% for item in gallery %}
+      <li class="gallery-item" draggable="true" data-gallery-item>
+        <span class="pos" data-pos>{{ loop.index }}</span>
+        <img src="{{ item.media.thumb_url }}" alt="">
+        <div class="inputs">
+          <input type="hidden" name="media_id" value="{{ item.media.id }}">
+          <label class="visually-hidden" for="cap-{{ item.media.id }}">Caption</label>
+          <input type="text" id="cap-{{ item.media.id }}" name="media_caption" value="{{ item.caption }}" maxlength="300" placeholder="Caption, e.g. “Ground-floor columns cast”">
+          <label class="visually-hidden" for="alt-{{ item.media.id }}">Description for screen readers</label>
+          <input type="text" id="alt-{{ item.media.id }}" name="media_alt" value="{{ item.alt }}" maxlength="255" placeholder="Description for screen readers (optional)">
+        </div>
+        <div class="item-actions">
+          <button type="button" class="btn btn-ghost btn-icon" data-move="-1" aria-label="Move photo up">↑</button>
+          <button type="button" class="btn btn-ghost btn-icon" data-move="1" aria-label="Move photo down">↓</button>
+          <button type="button" class="btn btn-danger btn-sm" data-remove>Remove</button>
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    <template data-gallery-template>
+      <li class="gallery-item" draggable="true" data-gallery-item>
+        <span class="pos" data-pos></span>
+        <img src="" alt="">
+        <div class="inputs">
+          <input type="hidden" name="media_id" value="">
+          <input type="text" name="media_caption" maxlength="300" placeholder="Caption, e.g. “Ground-floor columns cast”" aria-label="Caption">
+          <input type="text" name="media_alt" maxlength="255" placeholder="Description for screen readers (optional)" aria-label="Description for screen readers">
+        </div>
+        <div class="item-actions">
+          <button type="button" class="btn btn-ghost btn-icon" data-move="-1" aria-label="Move photo up">↑</button>
+          <button type="button" class="btn btn-ghost btn-icon" data-move="1" aria-label="Move photo down">↓</button>
+          <button type="button" class="btn btn-danger btn-sm" data-remove>Remove</button>
+        </div>
+      </li>
+    </template>
+    <p class="muted small" style="margin-top:.75rem">Removing a photo here only removes it from this update. The file stays in the media library.</p>
+  </section>
+
+  <section class="form-section" id="video"><h2><span class="step">3</span> Video (optional)</h2>
+    <div class="fields">{{ media_field(form, 'video', 'video', 'Site video') }}</div>
+  </section>
+
+  <section class="form-section"><h2><span class="step">4</span> Publication</h2>
+    <div class="fields two">{{ field(form.publication_status) }}</div>
+    {% if not project.is_published %}<p class="muted small">This project is not published yet, so even published updates stay hidden until the project is published.</p>{% endif %}
+  </section>
+
+  <div class="form-foot">
+    <span class="left" data-upload-busy hidden>Please wait for uploads to finish…</span>
+    <a class="btn btn-ghost" href="{{ url_for('admin.project_progress', project_id=project.id) }}">Cancel</a>
+    <button class="btn btn-primary" type="submit" data-submit>{{ 'Save update' if is_new else 'Save changes' }}</button>
+  </div>
+</form>
+{% endblock %}
+{% block scripts %}<script src="{{ static_asset('js/uploads.js') }}" defer></script>{% endblock %}

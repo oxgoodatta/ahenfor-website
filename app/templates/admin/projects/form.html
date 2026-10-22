@@ -1,0 +1,77 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field, media_field, pub_badge %}
+{% block title %}{{ 'Add project' if is_new else 'Edit ' ~ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="crumbs"><a href="{{ url_for('admin.projects') }}">Projects</a>{% if not is_new %} › <a href="{{ url_for('admin.project_progress', project_id=project.id) }}">{{ project.name }}</a>{% endif %}</div>
+    <h1>{{ 'Add a project' if is_new else 'Edit project details' }}</h1>
+    {% if not is_new %}<p class="sub">{{ project.name }} · {{ pub_badge(project.publication_status) }}</p>{% endif %}
+  </div>
+  {% if not is_new %}<div class="actions"><a class="btn btn-secondary" href="{{ url_for('admin.project_preview', project_id=project.id) }}" target="_blank" rel="noopener">Preview</a><a class="btn" href="{{ url_for('admin.project_progress', project_id=project.id) }}">Manage progress</a></div>{% endif %}
+</div>
+
+<form class="card" method="post" enctype="multipart/form-data" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  <section class="form-section"><h2><span class="step">1</span> Basic details</h2>
+    <div class="fields two">
+      {{ field(form.name, 'full') }}
+      {{ field(form.location) }}
+      {{ field(form.category) }}
+      {{ field(form.reference_code) }}
+      {{ field(form.slug) }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">2</span> Description</h2>
+    <div class="fields">
+      {{ field(form.short_description) }}
+      {{ field(form.description, textarea_cls='tall') }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">3</span> Cover media</h2>
+    <p class="section-help">The cover image appears on project cards and at the top of the project page.</p>
+    <div class="fields two">
+      {{ media_field(form, 'cover_image', 'image', 'Cover image') }}
+      {{ field(form.cover_image_alt, 'full') }}
+      {{ media_field(form, 'cover_video', 'video', 'Cover video') }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">4</span> Project status</h2>
+    <p class="section-help">Status describes construction (Upcoming, Ongoing, On Hold, Completed). It is separate from whether the project is visible on the website.</p>
+    <div class="fields two">
+      {{ field(form.status) }}
+      {{ field(form.progress_percent) }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">5</span> Dates</h2>
+    <div class="fields three">
+      {{ field(form.start_date) }}
+      {{ field(form.estimated_completion_date) }}
+      {{ field(form.actual_completion_date) }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">6</span> Client and value (optional)</h2>
+    <p class="section-help">Only shown publicly when the boxes are ticked. Get the client's approval first.</p>
+    <div class="fields two">
+      {{ field(form.client_name) }}
+      {{ field(form.project_value) }}
+      {{ field(form.show_client) }}
+      {{ field(form.show_value) }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">7</span> Homepage feature</h2>
+    <div class="fields two">
+      {{ field(form.is_featured) }}
+      {{ field(form.featured_order) }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">8</span> Publication</h2>
+    <div class="fields two">{{ field(form.publication_status) }}</div>
+  </section>
+  <div class="form-foot">
+    <span class="left">Fields marked * are required.</span>
+    <a class="btn btn-ghost" href="{{ url_for('admin.projects') if is_new else url_for('admin.project_progress', project_id=project.id) }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">{{ 'Create project' if is_new else 'Save changes' }}</button>
+  </div>
+</form>
+{% endblock %}

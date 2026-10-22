@@ -1,0 +1,56 @@
+{% from "partials/macros.html" import icon %}
+{% set footer_services = footer_service_links() %}
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-about">
+      <a class="brand" href="{{ url_for('public.home') }}" aria-label="{{ site_name }} — home">
+        {% if logo_url() %}<img src="{{ logo_url() }}" alt="{{ site_name }}" width="160" height="44">
+        {% else %}<span class="brand-mark" aria-hidden="true">A</span>
+        <span class="brand-text"><span class="brand-name">AHENFOR</span><span class="brand-sub">Engineering &amp; Construction</span></span>{% endif %}
+      </a>
+      <p>{{ site.footer_description }}</p>
+      {% if site.social_links %}
+      <ul class="socials" aria-label="Social media">
+        {% for label, url in site.social_links %}<li><a href="{{ url }}" rel="noopener" target="_blank">{{ label }}</a></li>{% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    <nav aria-labelledby="footer-company">
+      <h2 id="footer-company">Company</h2>
+      <ul>
+        <li><a href="{{ url_for('public.about') }}">About</a></li>
+        <li><a href="{{ url_for('public.projects') }}">Projects</a></li>
+        <li><a href="{{ url_for('public.awards') }}">Awards &amp; Certifications</a></li>
+        <li><a href="{{ url_for('public.news_events') }}">News &amp; Events</a></li>
+        <li><a href="{{ url_for('public.contact') }}">Contact</a></li>
+        <li><a href="{{ url_for('public.request_quote') }}">Request a Quote</a></li>
+      </ul>
+    </nav>
+    <nav aria-labelledby="footer-services">
+      <h2 id="footer-services">Services</h2>
+      <ul>
+        {% for s in footer_services %}<li><a href="{{ url_for('public.services', _anchor=s.slug) }}">{{ s.name }}</a></li>
+        {% else %}<li><a href="{{ url_for('public.services') }}">Our services</a></li>{% endfor %}
+      </ul>
+    </nav>
+    <div>
+      <h2>Contact</h2>
+      <ul class="footer-contact">
+        {% if site.contact_address %}<li>{{ icon('pin') }}<span>{{ site.contact_address }}</span></li>{% endif %}
+        {% if site.contact_phone %}<li>{{ icon('phone') }}<a href="tel:{{ site.contact_phone|replace(' ', '') }}">{{ site.contact_phone }}</a></li>{% endif %}
+        {% if site.contact_email %}<li>{{ icon('mail') }}<a href="mailto:{{ site.contact_email }}">{{ site.contact_email }}</a></li>{% endif %}
+        {% if site.whatsapp_url %}<li>{{ icon('chat') }}<a href="{{ site.whatsapp_url }}" rel="noopener" target="_blank">WhatsApp</a></li>{% endif %}
+        {% if site.contact_hours %}<li>{{ icon('clock') }}<span>{{ site.contact_hours }}</span></li>{% endif %}
+        {% if not (site.contact_phone or site.contact_email or site.contact_address) %}
+        <li>{{ icon('mail') }}<a href="{{ url_for('public.contact') }}">Send us a message</a></li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <span>&copy; {{ current_year() }} {{ site_name }}. All rights reserved.</span>
+      <span><a href="{{ url_for('public.privacy') }}">Privacy policy</a></span>
+    </div>
+  </div>
+</footer>

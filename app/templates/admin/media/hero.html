@@ -1,0 +1,72 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field, media_field %}
+{% macro hero_card(h) %}
+<div class="hero-preview">
+  {% set bg = h.poster or h.image %}
+  {% if h.media_type == 'video' and h.video %}<video src="{{ h.video.url }}" {% if bg %}poster="{{ bg.thumb_url }}"{% endif %} muted loop playsinline preload="metadata"></video>
+  {% elif h.image %}<img src="{{ h.image.thumb_url }}" alt="">
+  {% else %}<img src="{{ static_asset('images/hero-fallback.svg') }}" alt="">{% endif %}
+  <div class="txt"><div class="eyebrow">{{ h.eyebrow }}</div><h3>{{ h.headline }}</h3><span class="small">{{ h.media_type|capitalize }} background{% if h.media_type == 'video' and h.video %} (plays muted){% endif %}</span></div>
+</div>
+{% endmacro %}
+{% block title %}Homepage hero{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Homepage hero</h1><p class="sub">The large image or video at the top of the homepage. The layout is fixed; you choose the media and the words.</p></div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{{ url_for('admin.hero_preview') }}" target="_blank" rel="noopener">Preview draft</a>
+  </div>
+</div>
+
+<div class="grid-2" style="margin-bottom:1.25rem">
+  <section class="card">
+    <div class="card-head"><h2>Currently live</h2>{% if published.updated_by %}<span class="muted small">Published by {{ published.updated_by.name }} · {{ published.updated_at|short_date }}</span>{% endif %}</div>
+    <div class="card-body">{{ hero_card(published) }}</div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Draft</h2>{% if pending %}<span class="badge badge-draft">Unpublished changes</span>{% else %}<span class="badge badge-published">Same as live</span>{% endif %}</div>
+    <div class="card-body">{{ hero_card(draft) }}</div>
+    {% if pending %}
+    <div class="form-foot">
+      <form class="inline" method="post" action="{{ url_for('admin.hero_discard') }}" data-confirm="Discard the draft changes and go back to what is live?">{{ action_form.hidden_tag() }}<button class="btn btn-ghost" type="submit">Discard draft</button></form>
+      <form class="inline" method="post" action="{{ url_for('admin.hero_publish') }}" data-confirm="Publish this hero? The live homepage will change immediately.">{{ action_form.hidden_tag() }}<button class="btn btn-success" type="submit">Publish draft</button></form>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<form class="card" method="post" enctype="multipart/form-data" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  <section class="form-section"><h2><span class="step">1</span> Background</h2>
+    <div class="fields two">
+      {{ field(form.media_type, 'full') }}
+      <div class="full fields" data-hero-for="image">
+      {{ media_field(form, 'image', 'image', 'Background image', help='Landscape photo, at least 1920 px wide. ' ~ limits_for('image')) }}
+      {{ field(form.alt_text, 'full') }}
+      </div>
+      <div class="full fields" data-hero-for="video">
+      {{ media_field(form, 'video', 'video', 'Background video', help='Short, silent loop (10–30 seconds) works best. Sound is never played. ' ~ limits_for('video')) }}
+      {{ media_field(form, 'poster', 'image', 'Video poster image', help='Shown while the video loads and on phones with data saving. Uses the background image if empty.') }}
+      </div>
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">2</span> Words</h2>
+    <div class="fields two">
+      {{ field(form.eyebrow, 'full') }}
+      {{ field(form.headline, 'full') }}
+      {{ field(form.subheadline, 'full') }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">3</span> Buttons</h2>
+    <div class="fields two">
+      {{ field(form.primary_label) }}{{ field(form.primary_target) }}
+      {{ field(form.secondary_label) }}{{ field(form.secondary_target) }}
+    </div>
+  </section>
+  <div class="form-foot">
+    <span class="left">Saving keeps it as a draft. The live homepage changes only when you publish.</span>
+    <button class="btn btn-secondary" type="submit" name="action" value="draft">Save draft</button>
+    <button class="btn btn-primary" type="submit" name="action" value="publish" data-confirm-button="Save and publish? The live homepage will change immediately.">Save and publish</button>
+  </div>
+</form>
+{% endblock %}

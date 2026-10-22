@@ -1,0 +1,99 @@
+{% macro icon(name, cls='') -%}
+<svg class="icon {{ cls }}" aria-hidden="true" focusable="false"><use href="#i-{{ name }}"></use></svg>
+{%- endmacro %}
+
+{# Responsive image for a MediaAsset. Uses the 800px thumbnail variant plus the full image. #}
+{% macro img(asset, alt=None, sizes='100vw', lazy=True, cls='', full=False) -%}
+{%- if asset -%}
+<img src="{{ asset.url if full or not asset.thumb_key else asset.thumb_url }}"
+  {%- if asset.thumb_key %} srcset="{{ asset.thumb_url }} 800w, {{ asset.url }} {{ asset.width or 2400 }}w" sizes="{{ sizes }}"{% endif %}
+  {%- if asset.width and asset.height %} width="{{ asset.width }}" height="{{ asset.height }}"{% endif %}
+  alt="{{ alt if alt is not none else asset.alt_text }}"{% if lazy %} loading="lazy" decoding="async"{% else %} fetchpriority="high"{% endif %}{% if cls %} class="{{ cls }}"{% endif %}>
+{%- endif -%}
+{%- endmacro %}
+
+{% macro status_chip(status, cls='') -%}
+<span class="status-chip {{ status.value }} {{ cls }}">{{ status.label }}</span>
+{%- endmacro %}
+
+{% macro project_card(project, heading='h3') -%}
+<article class="project-card reveal">
+  <div class="media">
+    {% if project.cover_image %}{{ img(project.cover_image, alt=project.cover_image.alt_text or project.name, sizes='(min-width: 1000px) 400px, (min-width: 640px) 50vw, 100vw') }}
+    {% else %}<div class="media-placeholder">{{ icon('building') }}</div>{% endif %}
+    {{ status_chip(project.status) }}
+  </div>
+  <div class="body">
+    <p class="meta">{{ project.category }} · {{ project.location }}</p>
+    <{{ heading }}><a href="{{ url_for('public.project_detail', slug=project.slug) }}">{{ project.name }}</a></{{ heading }}>
+    <p>{{ project.short_description }}</p>
+    <span class="more" aria-hidden="true">View project {{ icon('arrow-right') }}</span>
+  </div>
+</article>
+{%- endmacro %}
+
+{% macro date_block(dt) -%}
+<div class="date-block" aria-hidden="true"><span class="day">{{ dt.day }}</span><span class="mon">{{ dt.strftime('%b %Y') }}</span></div>
+{%- endmacro %}
+
+{% macro event_item(post) -%}
+<li class="event-item{% if post.is_past %} is-past{% endif %}">
+  {{ date_block(post.starts_at) }}
+  <div>
+    <p class="meta">{{ post.kind.label }}{% if post.is_past %} · Past event{% endif %}</p>
+    <h3><a href="{{ url_for('public.post_detail', slug=post.slug) }}">{{ post.title }}</a></h3>
+    <p class="meta"><time datetime="{{ post.starts_at.isoformat() }}">{{ post.starts_at|datetime }}</time>{% if post.venue %} · {{ post.venue }}{% endif %}</p>
+    <p>{{ post.summary }}</p>
+  </div>
+</li>
+{%- endmacro %}
+
+{% macro news_card(post, heading='h3') -%}
+<article class="news-card reveal">
+  <div class="media">
+    {% if post.cover_image %}{{ img(post.cover_image, alt=post.cover_image.alt_text or post.title, sizes='(min-width: 1000px) 400px, 100vw') }}
+    {% else %}<div class="media-placeholder">{{ icon('file') }}</div>{% endif %}
+  </div>
+  <p class="meta">{{ post.kind.label }} · <time datetime="{{ (post.published_at or post.created_at).isoformat() }}">{{ (post.published_at or post.created_at)|short_date }}</time></p>
+  <{{ heading }}><a href="{{ url_for('public.post_detail', slug=post.slug) }}">{{ post.title }}</a></{{ heading }}>
+  <p>{{ post.summary }}</p>
+</article>
+{%- endmacro %}
+
+{% macro section_kicker(num, label, cls='') -%}
+<p class="kicker {{ cls }}"><span class="num">{{ num }}</span> {{ label }}</p>
+{%- endmacro %}
+
+{% macro pagination_nav(pagination, endpoint) -%}
+{% if pagination.pages > 1 %}
+{% set args = request.args.to_dict() %}
+<nav class="pagination" aria-label="Pagination">
+  {% if pagination.has_prev %}{% set _ = args.update(page=pagination.prev_num) %}<a href="{{ url_for(endpoint, **args) }}" rel="prev">{{ icon('chevron-left') }}<span class="visually-hidden">Previous page</span></a>{% endif %}
+  {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if p %}{% set _ = args.update(page=p) %}
+      {% if p == pagination.page %}<span aria-current="page">{{ p }}</span>{% else %}<a href="{{ url_for(endpoint, **args) }}">{{ p }}</a>{% endif %}
+    {% else %}<span class="disabled">…</span>{% endif %}
+  {% endfor %}
+  {% if pagination.has_next %}{% set _ = args.update(page=pagination.next_num) %}<a href="{{ url_for(endpoint, **args) }}" rel="next">{{ icon('chevron-right') }}<span class="visually-hidden">Next page</span></a>{% endif %}
+</nav>
+{% endif %}
+{%- endmacro %}
+
+{% macro field(f, cls='', hint=True) -%}
+<div class="field {{ cls }}{% if f.errors %} has-error{% endif %}">
+  {% set required = f.flags.required %}
+  {{ f.label() }}{% if required %}<span class="req" aria-hidden="true">*</span>{% else %} <span class="opt">(optional)</span>{% endif %}
+  {% set attrs = {} %}
+  {% if hint and f.description %}{% set _ = attrs.update({'aria-describedby': f.id ~ '-hint'}) %}{% endif %}
+  {% if f.errors %}{% set _ = attrs.update({'aria-invalid': 'true'}) %}{% endif %}
+  {{ f(**attrs) }}
+  {% if hint and f.description %}<p class="hint" id="{{ f.id }}-hint">{{ f.description }}</p>{% endif %}
+  {% for e in f.errors %}<p class="error">{{ e }}</p>{% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro flashes() -%}
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}<div class="flashes" role="status">{% for cat, msg in messages %}<div class="flash {{ cat }}">{{ msg }}</div>{% endfor %}</div>{% endif %}
+{% endwith %}
+{%- endmacro %}

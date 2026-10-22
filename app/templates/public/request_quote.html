@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, field, flashes %}
+{% block title %}Request a Quote — {{ site_name }}{% endblock %}
+{% block meta_description %}Tell {{ site_name }} about your building or infrastructure project and request a quote.{% endblock %}
+{% block content %}
+{% with title='Request a quote', lede='Tell us about your project. The more detail you share, the more useful our first response will be.', kicker='Project enquiry' %}{% include "partials/page_header.html" %}{% endwith %}
+<section class="section">
+  <div class="container form-layout">
+    <div>
+      {{ flashes() }}
+      {% if sent %}
+        <h2>Request received</h2>
+        <p class="lede">Thank you. Our team will review your project details and contact you.</p>
+        <p><a class="link-arrow" href="{{ url_for('public.projects') }}">Browse our projects {{ icon('arrow-right') }}</a></p>
+      {% else %}
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {{ form.hidden_tag() }}
+        <div class="hp-field" aria-hidden="true">{{ form.company_website.label }}{{ form.company_website(tabindex='-1', autocomplete='off') }}</div>
+        <h2 style="font-size:1.4rem">Your details</h2>
+        <div class="form-grid">
+          {{ field(form.full_name) }}
+          {{ field(form.organization) }}
+          {{ field(form.email) }}
+          {{ field(form.phone) }}
+        </div>
+        <h2 style="font-size:1.4rem;margin-top:2.5rem">The project</h2>
+        <div class="form-grid">
+          {{ field(form.service) }}
+          {{ field(form.project_location) }}
+          {{ field(form.timeline) }}
+          {{ field(form.budget_range) }}
+          {{ field(form.message, 'full') }}
+          <div class="field full{% if form.attachment.errors %} has-error{% endif %}">
+            {{ form.attachment.label }} <span class="opt">(optional)</span>
+            {{ form.attachment(accept='.pdf,.docx,.dwg,.jpg,.jpeg,.png', **{'aria-describedby': 'attachment-hint'}) }}
+            <p class="hint" id="attachment-hint">PDF, DOCX, DWG, JPG or PNG. Maximum {{ config.MAX_DOCUMENT_BYTES // 1048576 }} MB for documents, {{ config.MAX_IMAGE_BYTES // 1048576 }} MB for images.</p>
+            {% for e in form.attachment.errors %}<p class="error">{{ e }}</p>{% endfor %}
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn btn-accent" type="submit">Submit request {{ icon('arrow-right') }}</button>
+          <p class="form-note">Your information and files are kept private. See our <a href="{{ url_for('public.privacy') }}">privacy policy</a>.</p>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+    <aside class="contact-panel on-dark">
+      <h3>What happens next</h3>
+      <ul>
+        <li>{{ icon('file') }}<div><span class="meta">01</span>We review your scope, location and timeline.</div></li>
+        <li>{{ icon('phone') }}<div><span class="meta">02</span>An engineer contacts you to clarify requirements.</div></li>
+        <li>{{ icon('clipboard') }}<div><span class="meta">03</span>Where appropriate, we arrange a site visit and prepare a proposal.</div></li>
+      </ul>
+      {% if site.contact_phone %}<p style="margin-top:1.5rem">Prefer to talk? Call <a href="tel:{{ site.contact_phone|replace(' ', '') }}">{{ site.contact_phone }}</a>.</p>{% endif %}
+    </aside>
+  </div>
+</section>
+{% endblock %}

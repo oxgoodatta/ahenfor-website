@@ -1,0 +1,36 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pager %}
+{% block title %}Media library{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Media library</h1><p class="sub">Every photo, video and document uploaded to the website. Files are added from the project, news and content forms.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('admin.hero') }}">Homepage hero</a></div>
+</div>
+<section class="card">
+  <form class="toolbar" method="get" role="search">
+    <label class="visually-hidden" for="q">Search media</label>
+    <input type="search" id="q" name="q" value="{{ q }}" placeholder="Search file name, caption or description">
+    <label class="visually-hidden" for="kind">Type</label>
+    <select id="kind" name="kind" data-autosubmit>
+      <option value="">All types</option>
+      {% for k in kinds %}<option value="{{ k.value }}"{% if k.value == kind %} selected{% endif %}>{{ k.label }}s</option>{% endfor %}
+    </select>
+    <label class="check small"><input type="checkbox" name="archived" value="1" {% if archived %}checked{% endif %} data-autosubmit> Show archived</label>
+    <button class="btn btn-secondary" type="submit">Search</button>
+  </form>
+  {% if assets %}
+  <div class="media-grid">
+    {% for a in assets %}
+    <a class="media-tile" href="{{ url_for('admin.media_detail', asset_id=a.id) }}">
+      <div class="pv">{% if a.is_image %}<img src="{{ a.thumb_url }}" alt="{{ a.alt_text }}" loading="lazy">{% else %}{{ icon('video' if a.is_video else 'file') }}{% endif %}</div>
+      <div class="info"><strong>{{ a.display_name }}</strong>{{ a.kind.label }} · {{ a.size_label }} · {{ a.created_at|short_date }}</div>
+    </a>
+    {% endfor %}
+  </div>
+  {{ pager(pagination, 'admin.media_library') }}
+  {% else %}
+  <div class="empty">{{ icon('image') }}<h3>No media found</h3><p>Upload photos from a project's progress update, the homepage hero, or any content form.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% from "partials/macros.html" import icon %}
+<section class="cta-band" aria-labelledby="cta-title">
+  <div class="container cta-inner">
+    <div>
+      <p class="kicker on-dark">Start a conversation</p>
+      <h2 id="cta-title">Have a project in mind?</h2>
+      <p>Share your scope, location and timeline. Our team will review it and get back to you.</p>
+    </div>
+    <div class="actions">
+      <a class="btn btn-accent" href="{{ url_for('public.request_quote') }}">Request a Quote {{ icon('arrow-right') }}</a>
+      <a class="btn btn-outline-light" href="{{ url_for('public.contact') }}">Contact us</a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,9 @@
+{# Usage: {% with title=..., lede=..., crumb=..., kicker=... %}{% include "partials/page_header.html" %}{% endwith %} #}
+<header class="page-header on-dark">
+  <div class="container">
+    <nav class="breadcrumb" aria-label="Breadcrumb"><a href="{{ url_for('public.home') }}">Home</a><span aria-hidden="true">/</span><span aria-current="page">{{ crumb or title }}</span></nav>
+    {% if kicker %}<p class="kicker on-dark">{{ kicker }}</p>{% endif %}
+    <h1>{{ title }}</h1>
+    {% if lede %}<p class="lede">{{ lede }}</p>{% endif %}
+  </div>
+</header>

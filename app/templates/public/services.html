@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import icon, img %}
+{% block title %}Services — {{ site_name }}{% endblock %}
+{% block meta_description %}Building construction, civil and structural engineering, infrastructure and project management services from {{ site_name }}.{% endblock %}
+{% block content %}
+{% with title='Services', lede='Planning, engineering and construction delivered by one accountable team.', kicker='What we do' %}{% include "partials/page_header.html" %}{% endwith %}
+
+<section class="section">
+  <div class="container">
+    {% for s in services %}
+    <article class="service-detail reveal" id="{{ s.slug }}">
+      <div><span class="service-icon">{{ icon(service_icon(s.name)) }}</span><p class="service-num" style="margin-top:1rem">{{ '%02d'|format(loop.index) }}</p></div>
+      <div>
+        <h2 style="font-size:clamp(1.6rem,1.3rem + 1vw,2.2rem)">{{ s.name }}</h2>
+        <p class="lede">{{ s.short_description }}</p>
+        <div class="prose">{{ s.description|paragraphs }}</div>
+        <p style="margin-top:1.5rem"><a class="link-arrow" href="{{ url_for('public.request_quote', service=s.name) }}">Request a quote for this service {{ icon('arrow-right') }}</a></p>
+      </div>
+      <div>{% if s.image %}{{ img(s.image, alt=s.image.alt_text or s.name, sizes='(min-width: 900px) 33vw, 100vw') }}{% endif %}</div>
+    </article>
+    {% else %}
+    <div class="empty-state"><h3>Service information is being prepared</h3><p>Please <a href="{{ url_for('public.contact') }}">contact us</a> to discuss your project.</p></div>
+    {% endfor %}
+  </div>
+</section>
+{% include "partials/cta.html" %}
+{% endblock %}

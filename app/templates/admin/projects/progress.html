@@ -1,0 +1,120 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, life_badge, status_buttons %}
+{% block title %}Progress — {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head" style="margin-bottom:.75rem">
+  <div class="crumbs"><a href="{{ url_for('admin.projects') }}">Projects</a> › {{ project.name }}</div>
+</div>
+
+<div class="context-bar">
+  {% if project.cover_image %}<img src="{{ project.cover_image.thumb_url }}" alt="">{% else %}<span class="ph"></span>{% endif %}
+  <div>
+    <h1>{{ project.name }}</h1>
+    <div class="meta">{{ project.location }} · {{ project.category }}</div>
+    <div class="badges">{{ life_badge(project.status) }} {{ pub_badge(project.publication_status) }}{% if project.is_featured %} <span class="badge badge-featured">Featured</span>{% endif %}</div>
+  </div>
+  {% if project.progress_percent is not none %}
+  <div class="pct" title="Reported progress"><span>{{ project.progress_percent }}%</span><span class="bar"><span style="width:{{ project.progress_percent }}%"></span></span></div>
+  {% endif %}
+  <div class="actions">
+    <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.project_edit', project_id=project.id) }}">Edit details</a>
+    <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.project_preview', project_id=project.id) }}" target="_blank" rel="noopener">Preview</a>
+    {% if project.is_published %}<a class="btn btn-secondary btn-sm" href="{{ url_for('public.project_detail', slug=project.slug) }}" target="_blank" rel="noopener">View live {{ icon('external') }}</a>{% endif %}
+    {{ status_buttons('project', project, archive=True) }}
+  </div>
+</div>
+
+{% if not project.is_published %}
+<div class="callout">This project is a <strong>{{ project.publication_status.label|lower }}</strong>, so nothing on this page is visible on the public website yet. Publish the project when it is ready.</div>
+{% endif %}
+
+<div class="page-head">
+  <div>
+    <h2 style="font-size:1.25rem;margin:0">Construction progress</h2>
+    <p class="sub">{% if latest %}Latest update: <strong>{{ latest.title }}</strong> ({{ latest.update_date|short_date }}){% else %}No updates yet.{% endif %}</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn-secondary" href="{{ url_for('admin.phase_new', project_id=project.id) }}">+ Add phase</a>
+    {% if phases %}<a class="btn btn-primary" href="{{ url_for('admin.update_new', project_id=project.id) }}">{{ icon('image') }} Add progress update</a>{% endif %}
+  </div>
+</div>
+
+{% if not phases %}
+<div class="card"><div class="empty">{{ icon('clipboard') }}
+  <h3>Set up the construction phases</h3>
+  <p>Progress updates and photos are filed under phases. Start with the suggested phases and rename, reorder or archive any that don't apply, or add your own.</p>
+  <div class="actions" style="justify-content:center">
+    <form class="inline" method="post" action="{{ url_for('admin.phase_defaults', project_id=project.id) }}">{{ action_form.hidden_tag() }}<button class="btn btn-primary" type="submit">Add the 7 suggested phases</button></form>
+    <a class="btn btn-secondary" href="{{ url_for('admin.phase_new', project_id=project.id) }}">Add a custom phase</a>
+  </div>
+</div></div>
+{% else %}
+<form method="post" action="{{ url_for('admin.phase_reorder', project_id=project.id) }}" data-phase-order-form hidden>
+  {{ action_form.hidden_tag() }}<input type="hidden" name="order" data-phase-order>
+  <div class="callout" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">New phase order not saved yet. <button class="btn btn-sm" type="submit">Save order</button><a class="btn btn-ghost btn-sm" href="{{ url_for('admin.project_progress', project_id=project.id) }}">Undo</a></div>
+</form>
+
+<div data-phase-list>
+{% for phase in phases %}
+  {% set visible_updates = phase.updates|rejectattr('publication_status', 'equalto', PublicationStatus.ARCHIVED)|list|reverse|list %}
+  <section class="phase-card" id="phase-{{ phase.id }}" data-phase-id="{{ phase.id }}" aria-labelledby="phase-title-{{ phase.id }}">
+    <div class="phase-card-head">
+      <button type="button" class="drag-handle" data-drag-handle draggable="true" aria-label="Drag to reorder (or use the arrow buttons)" title="Drag to reorder">⋮⋮</button>
+      <span class="phase-num">{{ loop.index }}</span>
+      <div class="phase-title">
+        <h2 id="phase-title-{{ phase.id }}">{{ phase.title }}</h2>
+        <div class="meta">{{ life_badge(phase.status) }}
+          {% if phase.start_date %} · Started {{ phase.start_date|short_date }}{% endif %}{% if phase.completed_date %} · Completed {{ phase.completed_date|short_date }}{% endif %}
+          · {{ visible_updates|length }} update{{ 's' if visible_updates|length != 1 }}</div>
+      </div>
+      <div class="actions">
+        <form class="inline" method="post" action="{{ url_for('admin.phase_move', project_id=project.id, phase_id=phase.id) }}">{{ action_form.hidden_tag() }}<input type="hidden" name="direction" value="up"><button class="btn btn-ghost btn-icon" type="submit" {% if loop.first %}disabled{% endif %} aria-label="Move {{ phase.title }} up" title="Move up">↑</button></form>
+        <form class="inline" method="post" action="{{ url_for('admin.phase_move', project_id=project.id, phase_id=phase.id) }}">{{ action_form.hidden_tag() }}<input type="hidden" name="direction" value="down"><button class="btn btn-ghost btn-icon" type="submit" {% if loop.last %}disabled{% endif %} aria-label="Move {{ phase.title }} down" title="Move down">↓</button></form>
+        <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.phase_edit', project_id=project.id, phase_id=phase.id) }}">Edit phase</a>
+        <form class="inline" method="post" action="{{ url_for('admin.phase_archive', project_id=project.id, phase_id=phase.id) }}" data-confirm="Archive the phase “{{ phase.title }}”? Its updates and photos are kept but hidden from the website. You can restore it later.">{{ action_form.hidden_tag() }}<button class="btn btn-ghost btn-sm" type="submit">Archive</button></form>
+      </div>
+    </div>
+    {% if visible_updates %}
+    <ol class="update-list">
+      {% for u in visible_updates %}
+      <li class="update-row" id="update-{{ u.id }}">
+        <div class="update-date">{{ u.update_date|short_date }}</div>
+        <div>
+          <div class="update-title">{{ u.title }} {{ pub_badge(u.publication_status) }}{% if latest and u.id == latest.id %} <span class="badge badge-featured">Latest</span>{% endif %}</div>
+          <div class="thumbs">
+            {% for m in u.media_items[:8] %}<img src="{{ m.media.thumb_url }}" alt="" loading="lazy">{% endfor %}
+            {% if u.media_items|length > 8 %}<span class="more">+{{ u.media_items|length - 8 }}</span>{% endif %}
+            {% if u.video %}<span class="more" title="Has a video">{{ icon('video') }}</span>{% endif %}
+            {% if not u.media_items and not u.video %}<span class="muted small">No photos yet</span>{% endif %}
+          </div>
+        </div>
+        <div class="row-actions">
+          <a class="btn btn-secondary btn-sm" href="{{ url_for('admin.update_edit', update_id=u.id) }}">Edit / add photos</a>
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('admin.update_preview', update_id=u.id) }}" target="_blank" rel="noopener">Preview</a>
+          {{ status_buttons('update', u, next=url_for('admin.project_progress', project_id=project.id) ~ '#update-' ~ u.id) }}
+        </div>
+      </li>
+      {% endfor %}
+    </ol>
+    {% else %}
+    <p class="phase-empty">No updates in this phase yet.</p>
+    {% endif %}
+    <div class="phase-foot"><a class="btn btn-sm" href="{{ url_for('admin.update_new', project_id=project.id, phase_id=phase.id) }}">+ Add update to “{{ phase.title }}”</a></div>
+  </section>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if archived_phases %}
+<details class="card" style="margin-top:1.5rem">
+  <summary class="card-head" style="cursor:pointer"><h2>Archived phases ({{ archived_phases|length }})</h2></summary>
+  <ul class="update-list">
+    {% for phase in archived_phases %}
+    <li class="update-row" style="grid-template-columns:1fr auto"><div><strong>{{ phase.title }}</strong> <span class="muted small">· {{ phase.updates|length }} update(s) kept</span></div>
+      <form class="inline" method="post" action="{{ url_for('admin.phase_archive', project_id=project.id, phase_id=phase.id) }}">{{ action_form.hidden_tag() }}<input type="hidden" name="restore" value="1"><button class="btn btn-secondary btn-sm" type="submit">Restore</button></form></li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+{% endblock %}

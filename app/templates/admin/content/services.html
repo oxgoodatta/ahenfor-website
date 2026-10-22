@@ -1,0 +1,24 @@
+{% extends "admin/base.html" %}
+{% from "partials/macros.html" import icon %}
+{% from "admin/_macros.html" import pub_badge, status_buttons, thumb, visibility_filter %}
+{% block title %}Services{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><h1>Services</h1><p class="sub">Shown on the homepage, the Services page and in the quote form. Icons and layout are set by the website design.</p></div>
+  <div class="actions"><a class="btn btn-primary" href="{{ url_for('admin.service_new') }}">+ Add service</a></div>
+</div>
+<section class="card">
+  <form class="toolbar" method="get"><input type="search" name="q" value="{{ q }}" placeholder="Search services" aria-label="Search services">{{ visibility_filter(visibilities, visibility) }}<button class="btn btn-secondary" type="submit">Search</button></form>
+  {% if items %}
+  <div class="table-wrap"><table class="data">
+    <thead><tr><th>Order</th><th></th><th>Service</th><th>Visibility</th><th style="text-align:right">Actions</th></tr></thead>
+    <tbody>{% for s in items %}
+      <tr><td class="mono">{{ s.position }}</td><td>{{ thumb(s.image) }}</td>
+        <td class="title-cell"><a href="{{ url_for('admin.service_edit', item_id=s.id) }}">{{ s.name }}</a>{% if s.is_sample %} <span class="badge">Proposed — confirm with company</span>{% endif %}<div class="muted small">{{ s.short_description|truncate(90) }}</div></td>
+        <td>{{ pub_badge(s.publication_status) }}</td>
+        <td><div class="row-actions"><a class="btn btn-secondary btn-sm" href="{{ url_for('admin.service_edit', item_id=s.id) }}">Edit</a>{{ status_buttons('service', s) }}</div></td></tr>
+    {% endfor %}</tbody>
+  </table></div>
+  {% else %}<div class="empty">{{ icon('hardhat') }}<h3>No services yet</h3><p>Add the services the company offers.</p></div>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html><body style="margin:0;padding:24px;background:#f7f5f1;font-family:Arial,Helvetica,sans-serif;color:#14171d">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border-top:4px solid #c29a4b">
+    <tr><td style="padding:24px 28px;background:#0b1a33;color:#ffffff">
+      <div style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#d9b978">New website {{ 'quote request' if inquiry.kind.value == 'quote' else 'message' }}</div>
+      <div style="font-size:22px;font-weight:bold;margin-top:6px">{{ inquiry.full_name }}</div>
+    </td></tr>
+    <tr><td style="padding:24px 28px">
+      <table role="presentation" width="100%" cellpadding="6" cellspacing="0" style="font-size:14px">
+        <tr><td style="color:#5d6472;width:150px">Email</td><td><a href="mailto:{{ inquiry.email }}">{{ inquiry.email }}</a></td></tr>
+        {% if inquiry.phone %}<tr><td style="color:#5d6472">Phone</td><td>{{ inquiry.phone }}</td></tr>{% endif %}
+        {% if inquiry.organization %}<tr><td style="color:#5d6472">Organisation</td><td>{{ inquiry.organization }}</td></tr>{% endif %}
+        {% if inquiry.subject %}<tr><td style="color:#5d6472">Subject</td><td>{{ inquiry.subject }}</td></tr>{% endif %}
+        {% if inquiry.service %}<tr><td style="color:#5d6472">Service</td><td>{{ inquiry.service }}</td></tr>{% endif %}
+        {% if inquiry.project_location %}<tr><td style="color:#5d6472">Location</td><td>{{ inquiry.project_location }}</td></tr>{% endif %}
+        {% if inquiry.timeline %}<tr><td style="color:#5d6472">Timeline</td><td>{{ inquiry.timeline }}</td></tr>{% endif %}
+        {% if inquiry.budget_range %}<tr><td style="color:#5d6472">Budget</td><td>{{ inquiry.budget_range }}</td></tr>{% endif %}
+        {% if inquiry.attachment %}<tr><td style="color:#5d6472">Attachment</td><td>Yes — view it in the admin dashboard</td></tr>{% endif %}
+      </table>
+      <div style="margin-top:18px;padding:16px;background:#f7f5f1;font-size:14px;line-height:1.6;white-space:pre-wrap">{{ inquiry.message }}</div>
+      <p style="margin-top:24px"><a href="{{ config.SITE_URL }}{{ url_for('admin.inquiry_detail', inquiry_id=inquiry.id) }}" style="background:#0e1f3a;color:#ffffff;padding:12px 18px;text-decoration:none;font-weight:bold">Open in admin dashboard</a></p>
+    </td></tr>
+  </table>
+</body></html>

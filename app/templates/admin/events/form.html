@@ -1,0 +1,40 @@
+{% extends "admin/base.html" %}
+{% from "admin/_macros.html" import field, media_field, pub_badge, status_buttons %}
+{% block title %}{{ 'Add news or event' if is_new else 'Edit ' ~ post.title }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><div class="crumbs"><a href="{{ url_for('admin.posts') }}">News &amp; events</a> › {{ 'New' if is_new else post.title }}</div>
+  <h1>{{ 'Add news or an event' if is_new else 'Edit: ' ~ post.title }}</h1>
+  {% if not is_new %}<p class="sub">{{ pub_badge(post.publication_status) }}</p>{% endif %}</div>
+  {% if not is_new %}<div class="actions"><a class="btn btn-secondary" href="{{ url_for('admin.post_preview', post_id=post.id) }}" target="_blank" rel="noopener">Preview</a>{{ status_buttons('post', post, next=url_for('admin.post_edit', post_id=post.id), size='') }}</div>{% endif %}
+</div>
+<form class="card" method="post" enctype="multipart/form-data" novalidate data-unsaved-warning>
+  {{ form.csrf_token }}
+  <section class="form-section"><h2><span class="step">1</span> Content</h2>
+    <div class="fields two">
+      {{ field(form.title, 'full') }}
+      {{ field(form.kind) }}
+      {{ field(form.slug) }}
+      {{ field(form.summary, 'full') }}
+      {{ field(form.body, 'full', textarea_cls='tall') }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">2</span> Media</h2>
+    <div class="fields two">{{ media_field(form, 'cover_image', 'image', 'Cover image') }}{{ media_field(form, 'video', 'video', 'Video') }}</div>
+  </section>
+  <section class="form-section"><h2><span class="step">3</span> Event details</h2>
+    <p class="section-help">Fill these in for events. An event moves to “Past events” automatically after it ends; it is never deleted.</p>
+    <div class="fields two">
+      {{ field(form.starts_at) }}{{ field(form.ends_at) }}
+      {{ field(form.venue) }}{{ field(form.registration_url) }}
+    </div>
+  </section>
+  <section class="form-section"><h2><span class="step">4</span> Publication</h2>
+    <div class="fields two">{{ field(form.publication_status) }}{{ field(form.published_at) }}</div>
+  </section>
+  <div class="form-foot">
+    <a class="btn btn-ghost" href="{{ url_for('admin.posts') }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">{{ 'Create' if is_new else 'Save changes' }}</button>
+  </div>
+</form>
+{% endblock %}
