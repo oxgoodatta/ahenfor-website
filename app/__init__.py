@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 
 from flask import Flask, g, jsonify, render_template, request, url_for
+from markupsafe import Markup
 from flask_wtf.csrf import CSRFError
 from sqlalchemy import event
 from sqlalchemy.engine import Engine
@@ -89,7 +90,7 @@ def _register_template_helpers(app):
     from app.services.content_service import has_published_samples, public_services
     from app.utils.helpers import format_date, paragraphs
     from app.utils.icons import service_icon
-    from app.utils.logo import prepare_logo
+    from app.utils.logo import prepare_favicon, prepare_logo
 
     static_root = app.static_folder
 
@@ -108,6 +109,22 @@ def _register_template_helpers(app):
         if prepared:
             return url_for("public.brand_logo", v=prepared[1])
         return None
+
+    def favicon_tags():
+        """<link> tags for the browser-tab icon: the logo when present, else the default 'A'."""
+        if os.path.exists(os.path.join(static_root, "images", "logo.svg")):
+            return Markup(f'<link rel="icon" href="{asset("images/logo.svg")}" type="image/svg+xml">')
+        prepared = prepare_favicon(static_root, app.instance_path, 32)
+        if prepared:
+            v = prepared[1]
+            small = url_for("public.brand_favicon", size=32, v=v)
+            big = url_for("public.brand_favicon", size=180, v=v)
+            return Markup(
+                f'<link rel="icon" href="{small}" type="image/png" sizes="32x32">\n'
+                f'  <link rel="icon" href="{big}" type="image/png" sizes="180x180">\n'
+                f'  <link rel="apple-touch-icon" href="{big}">'
+            )
+        return Markup(f'<link rel="icon" href="{asset("images/favicon.svg")}" type="image/svg+xml">')
 
     def hero_target_url(key):
         target = settings_service.HERO_TARGETS.get(key) or settings_service.HERO_TARGETS["projects"]
@@ -152,6 +169,7 @@ def _register_template_helpers(app):
         show_sample_banner=show_sample_banner,
         service_icon=service_icon,
         organization_jsonld=organization_jsonld,
+        favicon_tags=favicon_tags,
         footer_service_links=lambda: public_services(limit=6),
         current_year=lambda: datetime.now().year,
     )

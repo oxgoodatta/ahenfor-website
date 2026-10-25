@@ -264,6 +264,33 @@ def brand_logo():
     return send_from_directory(os.path.dirname(path), os.path.basename(path), max_age=60 * 60 * 24 * 365)
 
 
+@bp.route("/brand/favicon-<int:size>.png")
+def brand_favicon(size):
+    """Browser-tab and home-screen icon generated from the logo."""
+    from app.utils.logo import FAVICON_SIZES, prepare_favicon
+
+    if size not in FAVICON_SIZES:
+        abort(404)
+    prepared = prepare_favicon(current_app.static_folder, current_app.instance_path, size)
+    if prepared is None:
+        abort(404)
+    path, _ = prepared
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), max_age=60 * 60 * 24 * 30)
+
+
+@bp.route("/favicon.ico")
+def favicon_ico():
+    """Browsers request /favicon.ico directly; send the logo icon (or the default)."""
+    from app.utils.logo import prepare_favicon
+
+    prepared = prepare_favicon(current_app.static_folder, current_app.instance_path, 32)
+    if prepared is None:
+        return redirect(url_for("static", filename="images/favicon.svg"))
+    path, _ = prepared
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), mimetype="image/png",
+                               max_age=60 * 60 * 24)
+
+
 @bp.route("/sitemap.xml")
 def sitemap():
     base = current_app.config["SITE_URL"]

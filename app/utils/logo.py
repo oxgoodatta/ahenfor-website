@@ -69,3 +69,38 @@ def prepare_logo(static_root, instance_path):
         log.warning("Could not prepare the logo (%s); using the original file.", exc)
         return src, src_mtime
     return dst, src_mtime
+
+
+FAVICON_SIZES = (32, 180, 512)
+
+
+def prepare_favicon(static_root, instance_path, size=180):
+    """Square icon made from the cleaned logo, centred on a white tile.
+
+    A white tile keeps the dark logo visible on dark browser tabs. Returns
+    (path, version) or None when there is no raster logo.
+    """
+    if size not in FAVICON_SIZES:
+        size = 180
+    prepared = prepare_logo(static_root, instance_path)
+    if prepared is None:
+        return None
+    src, version = prepared
+    dst = os.path.join(instance_path, "brand", f"favicon-{size}.png")
+    try:
+        if not os.path.exists(dst) or int(os.path.getmtime(dst)) < version:
+            with Image.open(src) as logo:
+                logo = logo.convert("RGBA")
+                inner = int(size * 0.84)
+                logo.thumbnail((inner, inner), Image.Resampling.LANCZOS)
+                tile = Image.new("RGBA", (size, size), (255, 255, 255, 255))
+                tile.alpha_composite(logo, ((size - logo.width) // 2, (size - logo.height) // 2))
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            tmp = dst + ".tmp"
+            tile.save(tmp, "PNG", optimize=True)
+            os.replace(tmp, dst)
+            os.utime(dst, (version, version))
+    except (OSError, ValueError) as exc:
+        log.warning("Could not build the favicon (%s).", exc)
+        return None
+    return dst, version
