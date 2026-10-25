@@ -18,7 +18,7 @@
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape" && document.body.classList.contains("nav-open")) { closeNav(); toggle.focus(); }
     });
-    window.addEventListener("resize", function () { if (window.innerWidth >= 1100) closeNav(); });
+    window.addEventListener("resize", function () { if (window.innerWidth >= 1240) closeNav(); });
   }
 
   /* Header background once the page scrolls past the hero top */

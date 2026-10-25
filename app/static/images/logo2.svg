@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="190" viewBox="0 0 900 190" role="img" aria-labelledby="title desc">
+  <title id="title">Ahenfor Engineering and Construction</title>
+  <desc id="desc">A gold, white and silver Ahenfor logo for a dark navy website navigation bar, with a larger subtitle and gold rules on both sides.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F3D58A"/>
+      <stop offset="1" stop-color="#C69A43"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E4E7EC"/>
+      <stop offset="1" stop-color="#9299A4"/>
+    </linearGradient>
+  </defs>
+
+  <g transform="translate(10 13)">
+    <path d="M18 144 L75 15 Q78 8 82 15 L137 144 L108 144 L78 72 L49 144 Z" fill="url(#gold)"/>
+    <path d="M58 103 L99 103 L108 124 L49 124 Z" fill="url(#gold)"/>
+    <path d="M96 60 L119 40 L119 144 L96 144 Z" fill="#D9DDE3"/>
+    <path d="M124 39 L143 55 L143 144 L124 144 Z" fill="url(#silver)"/>
+    <path d="M151 76 L173 91 L173 144 L151 144 Z" fill="#AAB0B9"/>
+    <path d="M184 101 L204 114 L204 144 L184 144 Z" fill="#858D98"/>
+    <path d="M30 151 Q102 126 181 151 Q111 139 30 151 Z" fill="url(#gold)"/>
+  </g>
+
+  <g font-family="Montserrat, Arial, Helvetica, sans-serif">
+    <text x="242" y="88" fill="#FFFFFF" font-size="57" font-weight="800" letter-spacing="5">AHENFOR</text>
+    <rect x="244" y="108" width="58" height="3" fill="url(#gold)"/>
+    <text x="315" y="120" fill="#E0E4EA" font-size="21" font-weight="700" letter-spacing="2.1">ENGINEERING &amp; CONSTRUCTION</text>
+    <rect x="779" y="108" width="58" height="3" fill="url(#gold)"/>
+  </g>
+</svg>

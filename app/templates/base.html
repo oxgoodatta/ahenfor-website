@@ -14,7 +14,7 @@
   <meta property="og:url" content="{{ canonical_url() }}">
   {% block og_image %}{% endblock %}
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="theme-color" content="#0b1a33">
+  <meta name="theme-color" content="#ffffff">
   <link rel="icon" href="{{ static_asset('images/favicon.svg') }}" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -33,8 +33,6 @@
     <strong>Preview</strong> — includes unpublished content and is only visible to signed-in administrators.
     <a href="{{ url_for('admin.dashboard') }}">Back to admin</a>
   </div>
-  {% elif show_sample_banner() %}
-  <div class="notice-bar" role="note"><strong>Sample content:</strong> some projects and articles on this site are placeholders for development and are not real company information.</div>
   {% endif %}
 
   {% include "partials/navbar.html" %}

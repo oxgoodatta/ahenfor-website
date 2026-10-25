@@ -8,12 +8,12 @@
   ('public.news_events', 'News & Events', ('public.news_events', 'public.post_detail', 'admin.post_preview')),
   ('public.contact', 'Contact', ('public.contact',)),
 ] %}
-{% set overlay = request.endpoint in ('public.home', 'admin.hero_preview') %}
-<header class="site-header{% if overlay %} is-overlay{% endif %}" data-header>
+<header class="site-header" data-header>
   <div class="container">
     <a class="brand" href="{{ url_for('public.home') }}" aria-label="{{ site_name }} — home">
       {% if logo_url() %}
-        <img src="{{ logo_url() }}" alt="{{ site_name }}" width="160" height="44">
+        <img class="brand-logo" src="{{ logo_url() }}" alt="" aria-hidden="true">
+        <span class="brand-text"><span class="brand-name">AHENFOR</span><span class="brand-sub">Engineering &amp; Construction</span></span>
       {% else %}
         {# Temporary text wordmark. Add app/static/images/logo.svg (or logo.png) to replace it. #}
         <span class="brand-mark" aria-hidden="true">A</span>

@@ -19,7 +19,7 @@
 {%- endmacro %}
 <div class="admin-shell">
   <aside class="sidebar" id="sidebar" aria-label="Admin navigation">
-    <a class="sidebar-brand" href="{{ url_for('admin.dashboard') }}"><span class="mark">A</span><span><strong>AHENFOR</strong><small>Website admin</small></span></a>
+    <a class="sidebar-brand" href="{{ url_for('admin.dashboard') }}">{% if logo_url() %}<span class="mark mark-logo"><img src="{{ logo_url() }}" alt=""></span>{% else %}<span class="mark">A</span>{% endif %}<span><strong>AHENFOR</strong><small>Website admin</small></span></a>
     <nav class="side-nav">
       <ul>{{ nav('admin.dashboard', 'Dashboard', 'gear') }}</ul>
       <h2>Projects</h2>

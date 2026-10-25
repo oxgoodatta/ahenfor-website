@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 
 from flask import (
@@ -249,6 +250,18 @@ def media_file(key):
     if not path.is_file():
         abort(404)
     return send_from_directory(storage.root, key, max_age=60 * 60 * 24 * 365)
+
+
+@bp.route("/brand/logo.png")
+def brand_logo():
+    """The site logo with its white margin cropped and background made transparent."""
+    from app.utils.logo import prepare_logo
+
+    prepared = prepare_logo(current_app.static_folder, current_app.instance_path)
+    if prepared is None:
+        abort(404)
+    path, _ = prepared
+    return send_from_directory(os.path.dirname(path), os.path.basename(path), max_age=60 * 60 * 24 * 365)
 
 
 @bp.route("/sitemap.xml")

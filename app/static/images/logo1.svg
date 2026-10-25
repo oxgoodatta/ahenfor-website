@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="180" viewBox="0 0 760 180" role="img" aria-labelledby="title desc">
+  <title id="title">Ahenfor Engineering and Construction</title>
+  <desc id="desc">A gold, white and silver Ahenfor logo designed for a dark navy website navigation bar, with a stylized A and building silhouettes.</desc>
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F3D58A"/>
+      <stop offset="1" stop-color="#C69A43"/>
+    </linearGradient>
+    <linearGradient id="silver" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#E4E7EC"/>
+      <stop offset="1" stop-color="#9299A4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent background; intended for a deep navy navbar -->
+  <g transform="translate(10 8)">
+    <!-- Stylized A -->
+    <path d="M18 144 L75 15 Q78 8 82 15 L137 144 L108 144 L78 72 L49 144 Z" fill="url(#gold)"/>
+    <path d="M58 103 L99 103 L108 124 L49 124 Z" fill="url(#gold)"/>
+    <!-- Building silhouettes -->
+    <path d="M96 60 L119 40 L119 144 L96 144 Z" fill="#D9DDE3"/>
+    <path d="M124 39 L143 55 L143 144 L124 144 Z" fill="url(#silver)"/>
+    <path d="M151 76 L173 91 L173 144 L151 144 Z" fill="#AAB0B9"/>
+    <path d="M184 101 L204 114 L204 144 L184 144 Z" fill="#858D98"/>
+    <!-- Ground / skyline sweep -->
+    <path d="M30 151 Q102 126 181 151 Q111 139 30 151 Z" fill="url(#gold)"/>
+  </g>
+
+  <g font-family="Montserrat, Arial, Helvetica, sans-serif">
+    <text x="242" y="87" fill="#FFFFFF" font-size="53" font-weight="800" letter-spacing="5">AHENFOR</text>
+    <rect x="244" y="103" width="62" height="2" fill="url(#gold)"/>
+    <text x="318" y="113" fill="#D5D9E0" font-size="17" font-weight="600" letter-spacing="3.2">ENGINEERING &amp; CONSTRUCTION</text>
+    <path d="M244 132 H710" stroke="#C69A43" stroke-opacity=".55" stroke-width="1"/>
+  </g>
+</svg>

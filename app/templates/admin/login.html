@@ -13,7 +13,7 @@
 {% from "admin/_macros.html" import field %}
 <main class="login-page">
   <div class="login-card">
-    <div class="sidebar-brand"><span class="mark">A</span><span><strong>AHENFOR</strong><small>Website administration</small></span></div>
+    <div class="sidebar-brand">{% if logo_url() %}<span class="mark mark-logo"><img src="{{ logo_url() }}" alt=""></span>{% else %}<span class="mark">A</span>{% endif %}<span><strong>AHENFOR</strong><small>Website administration</small></span></div>
     <h1 style="font-size:1.35rem">Sign in</h1>
     <p class="muted">For authorised company staff only.</p>
     {% with messages = get_flashed_messages(with_categories=true) %}

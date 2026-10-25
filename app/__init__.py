@@ -89,6 +89,7 @@ def _register_template_helpers(app):
     from app.services.content_service import has_published_samples, public_services
     from app.utils.helpers import format_date, paragraphs
     from app.utils.icons import service_icon
+    from app.utils.logo import prepare_logo
 
     static_root = app.static_folder
 
@@ -101,9 +102,11 @@ def _register_template_helpers(app):
         return url_for("static", filename=path, v=version)
 
     def logo_url():
-        for name in ("logo.svg", "logo.png"):
-            if os.path.exists(os.path.join(static_root, "images", name)):
-                return asset(f"images/{name}")
+        if os.path.exists(os.path.join(static_root, "images", "logo.svg")):
+            return asset("images/logo.svg")
+        prepared = prepare_logo(static_root, app.instance_path)
+        if prepared:
+            return url_for("public.brand_logo", v=prepared[1])
         return None
 
     def hero_target_url(key):
